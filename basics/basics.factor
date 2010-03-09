@@ -4,8 +4,8 @@ USING: accessors arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors
 namespaces prettyprint sequences system threads
-tinocopter.robotino.bindings ui ui.gadgets.buttons ;
-IN: tinocopter.robotino
+factorino.bindings ui ui.gadgets.buttons ;
+IN: factorino.basics
 
 
 TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id ;

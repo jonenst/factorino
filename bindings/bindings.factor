@@ -1,5 +1,5 @@
 USING: alien.c-types alien.libraries alien.syntax ;
-IN: tinocopter.robotino.bindings
+IN: factorino.bindings
 
 <<
 "rec_robotino_com_c" 
