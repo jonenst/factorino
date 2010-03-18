@@ -3,7 +3,7 @@ IN: factorino.bindings
 
 <<
 "rec_robotino_com_c" 
-"/data/trunk/openrobotino1/target/librec_robotino_com_c.so"
+"librec_robotino_com_c.so"
 "cdecl" add-library
 >>
 
