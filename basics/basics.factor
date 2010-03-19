@@ -28,10 +28,11 @@ GENERIC: com-set-image-server-port* ( port identifier -- )
 GENERIC: com-connect* ( identifier -- )
 GENERIC: com-disconnect* ( identifier -- )
 GENERIC: com-connected?* ( identifier -- )
+GENERIC: com-wait-for-update* ( identifier -- )
 
 PROTOCOL: com-protocol 
     com-destroy* com-set-address* com-address* com-set-image-server-port*
-    com-connect* com-disconnect* com-connected?* ;
+    com-connect* com-disconnect* com-connected?* com-wait-for-update* ;
 CONSULT: com-protocol robotino com-id>> ;
 
 ! TODO make this more generic
@@ -83,6 +84,7 @@ SYMBOL: current-robotino
 M: integer com-connect* Com_connect throw-when-false ; 
 M: integer com-disconnect* Com_disconnect throw-when-false ; 
 M: integer com-destroy* Com_destroy throw-when-false ;
+M: integer com-wait-for-update* Com_waitForUpdate throw-when-false ;
 M: integer com-address* 
     256 dup <byte-array>
     [ swap Com_address throw-when-false ] keep ;

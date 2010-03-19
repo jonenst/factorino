@@ -8,6 +8,8 @@ TUPLE: position {x,y} phi ;
 
 : fix-angle ( angle -- newangle )
     360 rem dup 180 > [ 360 - ] when ;
+: angular-distance ( a1 a2 -- distance )
+    [ - ] [ swap - ] 2bi [ 360 rem ] bi@ min ;
 : <position> ( {x,y} phi -- position )
     fix-angle position boa ;
 
@@ -55,7 +57,7 @@ CONSTANT: PHI-THRESHOLD 1 ! degrees
 : xy-at-position? ( robotino position -- ? ) 
     [ odometry-xy ] [ {x,y}>> ] bi* v- norm XY-THRESHOLD < ;
 : theta-at-position? ( robotino position -- ? )
-    [ odometry-phi ] [ phi>> ] bi* - abs PHI-THRESHOLD < ;
+    [ odometry-phi ] [ phi>> ] bi* angular-distance PHI-THRESHOLD < ;
 : at-position? ( robotino position -- ? )
 { [ xy-at-position? ] [ theta-at-position? ] } 2&& ;
 ! 2drop t ;
@@ -65,7 +67,17 @@ CONSTANT: PHI-THRESHOLD 1 ! degrees
 : print-position ( robotino -- robotino )
     [ [ odometry-xy ] [ odometry-phi ] bi "Position : " . . . ] keep ;
 : drive-position ( robotino position -- )
-    [ go-position ] [ [ print-position ] dip 2dup at-position? [ drop stop ] [ 50 milliseconds sleep drive-position ] if ] 2bi ;
+    [ go-position ] 
+    [ 
+        ! 50 milliseconds sleep
+        over com-wait-for-update*
+        yield
+        2dup at-position? [
+            drop stop
+            ] [
+            drive-position 
+        ] if
+    ] 2bi ;
 : drive-origin ( robotino -- )
     T{ position f { 0 0 } 0 } drive-position ;
 : drive-xy ( robotino {x,y} -- )

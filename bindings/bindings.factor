@@ -76,6 +76,7 @@ FUNCTION: BOOL Com_setImageServerPort ( ComId id, int port ) ;
 FUNCTION: BOOL Com_connect ( ComId id ) ;
 FUNCTION: BOOL Com_disconnect ( ComId id ) ;
 FUNCTION: BOOL Com_isConnected ( ComId id ) ;
+FUNCTION: BOOL Com_waitForUpdate ( ComId id ) ;
 
 FUNCTION: DigitalInputId DigitalInput_construct ( uint n ) ;
 FUNCTION: BOOL DigitalInput_destroy ( DigitalInputId id ) ;
