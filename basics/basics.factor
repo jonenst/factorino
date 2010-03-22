@@ -4,11 +4,11 @@ USING: accessors arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors
 namespaces prettyprint sequences system threads
-factorino.bindings ui ui.gadgets.buttons ;
+factorino.bindings factorino.functor ui ui.gadgets.buttons ;
 IN: factorino.basics
 
 
-TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id ;
+TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id camera-id ;
 : throw-when-false ( return-code -- ) FALSE = [ "You're fucked" throw ] when ;
 
 : to-degrees ( radian -- degrees ) 180 * pi / ;
@@ -35,12 +35,13 @@ PROTOCOL: com-protocol
     com-connect* com-disconnect* com-connected?* com-wait-for-update* ;
 CONSULT: com-protocol robotino com-id>> ;
 
+ROBOTINO-WORD: bumper
 ! TODO make this more generic
-GENERIC: bumper-destroy* ( identifier -- )
-M: f bumper-destroy* drop ;
-M: integer bumper-destroy* Bumper_destroy throw-when-false ;
-PROTOCOL: bumper-protocol bumper-destroy* ;
-CONSULT: bumper-protocol robotino bumper-id>> ;
+! GENERIC: bumper-destroy* ( identifier -- )
+! M: f bumper-destroy* drop ;
+! M: integer bumper-destroy* Bumper_destroy throw-when-false ;
+! PROTOCOL: bumper-protocol bumper-destroy* ;
+! CONSULT: bumper-protocol robotino bumper-id>> ;
 
 GENERIC: omnidrive-destroy* ( identifier -- )
 M: f omnidrive-destroy* drop ;
@@ -57,27 +58,6 @@ CONSULT: sensors-protocol robotino sensors-id>> ;
 
 : num-distance-sensors ( -- n ) numDistanceSensors ; 
 
-: new-robotino ( address class -- robotino ) 
-    new
-    num-distance-sensors f <array> >>sensors-id
-    Com_construct >>com-id
-    [ com-set-address* ]
-    [ com-connect* ] 
-    [ ] tri ;
-: <robotino> ( address -- robotino ) 
-    \ robotino new-robotino ;
-: kill-robotino ( robotino -- )
-    { 
-        [ sensors-destroy* ]
-        [ bumper-destroy* ]
-        [ omnidrive-destroy* ]
-        [ com-destroy* ] 
-    } cleave ;
-: kill-button ( robotino -- robotino )
-    "KILL ME!" over [ kill-robotino drop ] curry <border-button> [ "robotino" open-window ] curry with-ui ;
-SYMBOL: current-robotino
-: <button-robotino> ( adress -- robotino )
-    <robotino> kill-button ;
 
 
 
@@ -147,10 +127,30 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     50 milliseconds sleep 
     robotino new-vector new-time (drive) ;
 : drive ( robotino -- ) { 200 0 } nano-count (drive) ;
-    
+
+: new-robotino ( address class -- robotino ) 
+    new
+    num-distance-sensors f <array> >>sensors-id
+    Com_construct >>com-id
+    [ com-set-address* ]
+    [ com-connect* ] 
+    [ ] tri ;
+: <robotino> ( address -- robotino ) 
+    \ robotino new-robotino ;
 : robotino-test ( adress -- )
     <robotino> dup omnidrive-construct drive ; 
+: kill-robotino ( robotino -- )
+    { 
+        [ sensors-destroy* ]
+        [ bumper-destroy* ]
+        [ omnidrive-destroy* ]
+        [ com-destroy* ] 
+    } cleave ;
+: kill-button ( robotino -- robotino )
+    "KILL ME!" over [ kill-robotino drop ] curry <border-button> [ "kill-switch" open-window ] curry with-ui ;
 
+: <button-robotino> ( adress -- robotino )
+    <robotino> kill-button ;
 
 
 : <init-robotino> ( adress -- robotino )
