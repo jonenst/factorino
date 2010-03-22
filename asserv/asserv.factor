@@ -1,7 +1,8 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors calendar combinators.short-circuit kernel math
-math.order math.vectors threads factorino.basics prettyprint io ;
+USING: accessors arrays calendar combinators.short-circuit
+factorino.basics io kernel math math.order math.vectors
+prettyprint threads ;
 IN: factorino.asserv
 
 TUPLE: position {x,y} phi ;
@@ -19,7 +20,7 @@ CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
 CONSTANT: MAXIMUM-SPEED 500 ! mm/sec ??
 CONSTANT: MINIMUM-ROTATION 0 ! mm/sec ??
 CONSTANT: MAXIMUM-ROTATION 50 ! mm/sec ??
-CONSTANT: XY-THRESHOLD 10 ! mm ??
+CONSTANT: XY-THRESHOLD 1 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
 : to-position-speed ( norm -- speed )
     dup 50 > [
@@ -83,6 +84,9 @@ CONSTANT: PHI-THRESHOLD 1 ! degrees
 : drive-xy ( robotino {x,y} -- )
     over odometry-phi <position> drive-position ;
 
+GENERIC: drive-to ( robotino destination -- )
+M: array drive-to drive-xy ;
+M: position drive-to drive-position ;
 
 
 
