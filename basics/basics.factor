@@ -4,12 +4,9 @@ USING: accessors arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors
 namespaces prettyprint sequences system threads
-factorino.bindings factorino.functor ui ui.gadgets.buttons ;
+factorino.bindings factorino.functor factorino.types ui ui.gadgets.buttons ;
 IN: factorino.basics
 
-
-TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id camera-id ;
-: throw-when-false ( return-code -- ) FALSE = [ "You're fucked" throw ] when ;
 
 : to-degrees ( radian -- degrees ) 180 * pi / ;
 : to-radian ( degrees -- radian ) pi * 180 / ;
@@ -35,26 +32,11 @@ PROTOCOL: com-protocol
     com-connect* com-disconnect* com-connected?* com-wait-for-update* ;
 CONSULT: com-protocol robotino com-id>> ;
 
-ROBOTINO-WORD: bumper
-! TODO make this more generic
-! GENERIC: bumper-destroy* ( identifier -- )
-! M: f bumper-destroy* drop ;
-! M: integer bumper-destroy* Bumper_destroy throw-when-false ;
-! PROTOCOL: bumper-protocol bumper-destroy* ;
-! CONSULT: bumper-protocol robotino bumper-id>> ;
-
-GENERIC: omnidrive-destroy* ( identifier -- )
-M: f omnidrive-destroy* drop ;
-M: integer omnidrive-destroy* OmniDrive_destroy throw-when-false ;
-PROTOCOL: omnidrive-protocol omnidrive-destroy* ;
-CONSULT: omnidrive-protocol robotino omnidrive-id>> ;
-
-GENERIC: sensors-destroy* ( identifier -- )
-M: f sensors-destroy* drop ;
-M: integer sensors-destroy* DistanceSensor_destroy throw-when-false ;
+ROBOTINO-WORD: bumper Bumper
+ROBOTINO-WORD: omnidrive OmniDrive
+ROBOTINO-WORD: sensors DistanceSensor
 M: array sensors-destroy* [ sensors-destroy* ] each ;
-PROTOCOL: sensors-protocol sensors-destroy* ;
-CONSULT: sensors-protocol robotino sensors-id>> ;
+
 
 : num-distance-sensors ( -- n ) numDistanceSensors ; 
 

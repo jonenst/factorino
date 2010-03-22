@@ -1,25 +1,24 @@
 ! Copyright (C) 2010 Your name.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: functors kernel math
-parser ;
+USING: factorino.types functors kernel math delegate lexer
+parser unicode.case ;
 IN: factorino.functor
 
-  !  C-WORD DEFERS ${WORD}
-    ! WORD-destroy* DEFERS ${WORD}-destroy*
-    ! WORD-protocol DEFERS ${WORD}-protocol
-    ! WORD-id>> IS ${WORD}-id>>
-FUNCTOR: define-robotino-word ( WORD -- )
+FUNCTOR: define-robotino-word ( WORD CAPITALIZED -- )
     
+    WORD-destroy* DEFINES ${WORD}-destroy*
+    WORD-protocol DEFERS ${WORD}-protocol
+    WORD-id>> IS ${WORD}-id>>
+    CAPITALIZED IS ${CAPITALIZED}_destroy
+    WORD-protocol DEFERS ${WORD}-protocol
     
     WHERE
 
-   ! GENERIC: WORD-destroy* ( identifier -- )
-   ! M: f WORD-destroy* drop ;
-   ! M: integer WORD-destroy* drop ; ! C-WORD throw-when-false ;
-!    M: robotino WORD-destroy* WORD-id>> WORD-destroy* ;
-    ! PROTOCOL: WORD-protocol WORD-destroy* ;
-    ! CONSULT: WORD-protocol robotino WORD-id>> ;
+    GENERIC: WORD-destroy* ( identifier -- )
+    M: POSTPONE: f WORD-destroy* drop ;
+    M: integer WORD-destroy* CAPITALIZED throw-when-false ;
+    M: robotino WORD-destroy* WORD-id>> WORD-destroy* ;
 ;FUNCTOR
-SYNTAX: ROBOTINO-WORD: scan-word define-robotino-word ;
+SYNTAX: ROBOTINO-WORD: scan scan define-robotino-word ;
 
 
