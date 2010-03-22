@@ -7,10 +7,8 @@ IN: factorino.functor
 FUNCTOR: define-robotino-word ( WORD CAPITALIZED -- )
     
     WORD-destroy* DEFINES ${WORD}-destroy*
-    WORD-protocol DEFERS ${WORD}-protocol
     WORD-id>> IS ${WORD}-id>>
     CAPITALIZED IS ${CAPITALIZED}_destroy
-    WORD-protocol DEFERS ${WORD}-protocol
     
     WHERE
 
