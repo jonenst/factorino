@@ -3,5 +3,7 @@
 USING: factorino.bindings kernel ;
 IN: factorino.types
 
-TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id camera-id ;
+TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id camera-id 
+current-direction
+;
 : throw-when-false ( return-code -- ) FALSE = [ "You're fucked" throw ] when ;

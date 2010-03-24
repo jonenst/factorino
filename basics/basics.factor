@@ -53,12 +53,15 @@ M: integer com-address*
 M: integer com-set-address* swap Com_setAddress throw-when-false ;
 
 : omnidrive-construct ( robotino -- ) 
+    { { 0 0 } { 0 } } >>current-direction
     OmniDrive_construct >>omnidrive-id
     [ omnidrive-id>> ] [ com-id>> ] bi
     OmniDrive_setComId throw-when-false ;
 : omnidrive-destroy ( robotino -- ) omnidrive-id>> OmniDrive_destroy throw-when-false ;
-: omnidrive-set-velocity ( robotino v omega -- )
-    [ [ omnidrive-id>> ] dip first2 ] dip OmniDrive_setVelocity throw-when-false ;
+:: omnidrive-set-velocity ( robotino v omega -- )
+    robotino omnidrive-id>> v first2 omega
+    OmniDrive_setVelocity throw-when-false 
+    v omega 2array robotino (>>current-direction) ;
 
 : bumper-construct ( robotino -- )
     Bumper_construct >>bumper-id
@@ -135,6 +138,14 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     <robotino> kill-button ;
 
 
-: <init-robotino> ( adress -- robotino )
+: <init-robotino> ( -- robotino )
+"137.194.64.6:8080"
     <button-robotino>
-    [ omnidrive-construct ] [ odometry-construct ] [ ] tri ;
+    {
+        [ omnidrive-construct ]
+        [ odometry-construct ]
+        [ init-all-sensors ]
+        [ odometry-reset ]
+        [ ] 
+    }
+    cleave ;

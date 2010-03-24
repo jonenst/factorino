@@ -2,7 +2,7 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays calendar combinators.short-circuit
 factorino.basics io kernel math math.order math.vectors
-prettyprint threads ;
+prettyprint threads sequences locals math.functions ;
 IN: factorino.asserv
 
 TUPLE: position {x,y} phi ;
@@ -12,7 +12,7 @@ TUPLE: position {x,y} phi ;
 : angular-distance ( a1 a2 -- distance )
     [ - ] [ swap - ] 2bi [ 360 rem ] bi@ min ;
 : <position> ( {x,y} phi -- position )
-    fix-angle position boa ;
+    dup [ fix-angle ] when position boa ;
 
 CONSTANT: SPEED-MULTIPLIER 8
 CONSTANT: OMEGA-MULTIPLIER 3
@@ -20,8 +20,10 @@ CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
 CONSTANT: MAXIMUM-SPEED 500 ! mm/sec ??
 CONSTANT: MINIMUM-ROTATION 0 ! mm/sec ??
 CONSTANT: MAXIMUM-ROTATION 50 ! mm/sec ??
-CONSTANT: XY-THRESHOLD 1 ! mm ??
+CONSTANT: XY-THRESHOLD 10 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
+
+CONSTANT: OBSTACLE_THRESHOLD 0.8
 : to-position-speed ( norm -- speed )
     dup 50 > [
         drop 400
@@ -33,7 +35,6 @@ CONSTANT: PHI-THRESHOLD 1 ! degrees
     swap
     [ [ {x,y}>> ] [ odometry-xy ] bi* v- ]
     [ nip odometry-phi neg ] 2bi
-    "DEBUG: position-vector : " write 2dup . . 
     rotate-degrees ;
 : to-position-speed-vector ( robotino position -- speed-vector )
     to-position-vector [ normalize ] [ norm ] bi to-position-speed v*n ;
@@ -47,46 +48,87 @@ CONSTANT: PHI-THRESHOLD 1 ! degrees
         adjust-current
     ] when - ;
 : to-position-omega ( robotino position -- omega )
-    [ odometry-phi ] [ phi>> ] bi* swap
-    chose-side
-    OMEGA-MULTIPLIER * 
-    fit-to-range ;
+    dup phi>> [
+      [ odometry-phi ] [ phi>> ] bi* 
+      swap
+      chose-side
+      OMEGA-MULTIPLIER * 
+      fit-to-range
+    ] [
+      drop current-direction>> second  
+    ] if ;
     
-: go-position ( robotino position -- )
-    [ drop ] [ to-position-speed-vector ] [ to-position-omega ] 2tri omnidrive-set-velocity ;
+: go-position ( robotino position -- current-dir )
+    [ drop ] [ to-position-speed-vector ] [ to-position-omega ] 2tri
+    [ omnidrive-set-velocity ] 2keep drop ;
 
 : xy-at-position? ( robotino position -- ? ) 
     [ odometry-xy ] [ {x,y}>> ] bi* v- norm XY-THRESHOLD < ;
 : theta-at-position? ( robotino position -- ? )
-    [ odometry-phi ] [ phi>> ] bi* angular-distance PHI-THRESHOLD < ;
+    dup phi>> [ 
+    [ odometry-phi ] [ phi>> ] bi* angular-distance PHI-THRESHOLD < ]
+    [ 2drop t ] if ;
 : at-position? ( robotino position -- ? )
 { [ xy-at-position? ] [ theta-at-position? ] } 2&& ;
-! 2drop t ;
 
 : stop ( robotino -- ) { 0 0 } 0 omnidrive-set-velocity ;
 
 : print-position ( robotino -- robotino )
     [ [ odometry-xy ] [ odometry-phi ] bi "Position : " . . . ] keep ;
-: drive-position ( robotino position -- )
-    [ go-position ] 
-    [ 
-        ! 50 milliseconds sleep
-        over com-wait-for-update*
-        yield
-        2dup at-position? [
-            drop stop
-            ] [
-            drive-position 
-        ] if
-    ] 2bi ;
-: drive-origin ( robotino -- )
-    T{ position f { 0 0 } 0 } drive-position ;
-: drive-xy ( robotino {x,y} -- )
-    over odometry-phi <position> drive-position ;
+:: >padding ( direction -- padding ) 
+    direction norm :> r
+    r zero? [ f ] [
+    direction first2 :> ( x y )
+    y x r + / atan 2 * to-degrees ] if ;
+CONSTANT: FRONT-RANGE 45
+: front-range ( padding -- range ) 
+    FRONT-RANGE [ - ] [ + ] 2bi 2array ;
+: in-range ( angle range -- ? ) 
+[ 360 [ + ] [ - ] [ drop ] 2tri ] dip
+[ first2 between? ] curry tri@ or or ;
+: front-indices ( robotino range -- indices ) 
+     [ sensors-headings ] dip 
+     [ swapd in-range [ drop f ] unless ] curry map-index sift ;
+: values-in-range ( robotino range -- values ) 
+    dupd front-indices swap [ distance-sensor-voltage ] curry map
+    ;
+: against-obstacle? ( robotino current-direction -- ? )
+    >padding front-range values-in-range
+    supremum OBSTACLE_THRESHOLD > ;
+DEFER: drive-position
+: continue-driving ( stop? robotino position -- blocking-pos/f )
+    2dup at-position? [
+       drop swap [ stop ] [ drop ] if f 
+    ] [
+      drive-position
+    ] if ;
 
-GENERIC: drive-to ( robotino destination -- )
-M: array drive-to drive-xy ;
+:: drive-position ( stop? robotino position -- blocking-pos/f )
+    robotino position go-position :> current-dir
+    robotino current-dir against-obstacle? [
+        robotino stop position
+    ] [
+        ! WTF, com-wait-for-update* is blocking !! 
+        robotino com-wait-for-update*
+        yield
+        stop? robotino position continue-driving
+    ] if ;
+
+: drive-origin ( robotino -- blocking-position/f )
+    [ t ] dip T{ position f { 0 0 } 0 } drive-position ;
+: drive-xy ( stop? robotino {x,y} -- blocking-position/f )
+    f <position> drive-position ;
+
+GENERIC: drive-to ( stop? robotino destination -- blocking-position/f )
+: drive-path ( stop? robotino path -- blocking-position/f )
+    [ swap [ stop ] [ drop ] if f ]
+    [ unclip pick swap [ f ] 2dip drive-to [ [ 3drop ] dip ] [ drive-path ] if* ]
+    if-empty ;
+    
+M: array drive-to dup first integer? [ drive-xy ] [ drive-path ] if ;
 M: position drive-to drive-position ;
 
+: gogo ( robotino destination -- blocking/f )
+    [ t ] 2dip drive-to ;
 
 
