@@ -7,6 +7,11 @@ namespaces prettyprint sequences system threads
 factorino.bindings factorino.functor factorino.types ui ui.gadgets.buttons ;
 IN: factorino.basics
 
+TUPLE: position {x,y} phi ;
+: fix-angle ( angle -- newangle )
+    360 rem dup 180 > [ 360 - ] when ;
+: <position> ( {x,y} phi -- position )
+    dup [ fix-angle ] when position boa ;
 
 : to-degrees ( radian -- degrees ) 180 * pi / ;
 : to-radian ( degrees -- radian ) pi * 180 / ;
@@ -53,7 +58,7 @@ M: integer com-address*
 M: integer com-set-address* swap Com_setAddress throw-when-false ;
 
 : omnidrive-construct ( robotino -- ) 
-    { { 0 0 } { 0 } } >>current-direction
+    T{ position f { 0 0 } 0 } >>current-direction
     OmniDrive_construct >>omnidrive-id
     [ omnidrive-id>> ] [ com-id>> ] bi
     OmniDrive_setComId throw-when-false ;
@@ -61,7 +66,7 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 :: omnidrive-set-velocity ( robotino v omega -- )
     robotino omnidrive-id>> v first2 omega
     OmniDrive_setVelocity throw-when-false 
-    v omega 2array robotino (>>current-direction) ;
+    v omega <position> robotino (>>current-direction) ;
 
 : bumper-construct ( robotino -- )
     Bumper_construct >>bumper-id
