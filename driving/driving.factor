@@ -40,10 +40,9 @@ CONSTANT: cell-size 100
     result [
     result {x,y}>> {x,y}>{i,j} :> obstacle
     obstacle "adding obstacle @" write . 
-    obstacle the-map set-obstacle 
+    obstacle the-map t set-obstacle 
 robotino position the-map (go-to)
     ] [ t ] if
     ] [ f ] if ] [ drop t ] if ;
-: display-map ( map -- ) [ <map-gadget> "coucou" open-window ] curry with-ui ;
 : go-to ( robotino position -- arrived? )
-   { 50000 50000 } cell-size v/n \ sparse-map <map> [ display-map ] [ (go-to) ] bi ;
+   { 10000 10000 } cell-size v/n \ sparse-map <map> [ display ] [ (go-to) ] bi ;
