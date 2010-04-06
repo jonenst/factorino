@@ -29,15 +29,25 @@ TUPLE: table-map table size index-offset ;
    2 [ /i ] curry map v- ; 
 : to-table ( {i,j} map -- {i,j} table )
     [ index-offset>> v+ ] [ nip table>> ] 2bi ;
+: in-table? ( {i,j} map -- ? )
+    { 
+        [ drop [ 0 >= ] all? ]
+        [ size>> v- [ 0 < ] all? ] 
+    } 2&& ;
+
+: table-map-neighbours ( {i,j} map -- neighbours ) 
+    [ side-neighbours ] dip [ in-table? ] curry filter ;
+    
 PRIVATE>
 M: table-map init 
     over make-table >>table
     over >>size
     swap 2 [ /i ] curry map >>index-offset ;
-M: table-map neighbours 
-    [ to-table 
-    [ side-neighbours ] dip [ Mi,j { [ FREE = ] [ UNEXPLORED = ] } 1|| ] curry filter ] keep
-    size>> [ table>real ] curry map ;
+M:: table-map neighbours ( {i,j} the-map -- neighbours )
+    {i,j} the-map to-table :> ( {i',j'} the-table )
+    {i',j'} the-map table-map-neighbours 
+    [ the-table Mi,j { [ FREE = ] [ UNEXPLORED = ] } 1|| ] filter
+    the-map size>> [ table>real ] curry map ;
 M: table-map set-state to-table set-Mi,j ;
 M: table-map state to-table Mi,j ;
 M: table-map all-obstacles [ table>> [ OBSTACLE = ] mfilter-index ] keep size>> [ table>real ] curry map ;
