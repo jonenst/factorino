@@ -1,15 +1,13 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays combinators factorino.maps.general hash-sets kernel
-math math.vectors sequences sets ;
+math math.vectors sequences sets factorino.maps.utils ;
 IN: factorino.maps.sparse
 
 <PRIVATE
 : half-offset ( obstacles size -- obstacles ) 
     2 [ /i ] curry map
     [ v- ] curry map ;
-: side-neighbours ( {i,j} -- seq )
-    { { 1 0 } { -1 0 } { 0 1 } { 0 -1 } } [ v+ ] with map ;
 : line ( x y -- seq )
     [ iota ] dip [ 2array ] curry map ;
 : 2-lines ( {x,y} -- seq )
@@ -27,6 +25,7 @@ M: sparse-map init
     over offset-obstacles [ >>map ] [ clone >>explored ] bi
     swap >>size ;
 M: sparse-map set-state 
+rot
 { 
     { OBSTACLE [ [ map>> adjoin ] [ explored>> adjoin ] 2bi ] }
     { FREE [ [ map>> delete ] [ explored>> adjoin ] 2bi ] }

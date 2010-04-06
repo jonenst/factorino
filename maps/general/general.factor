@@ -8,12 +8,13 @@ CONSTANT: OBSTACLE   1
 CONSTANT: FREE       2
 GENERIC: init ( size map -- map )
 GENERIC: neighbours ( {i,j} map -- neighbours )
-GENERIC# set-state 1 ( {i,j} map state -- )
+GENERIC: set-state ( state {i,j} map -- )
 GENERIC: state ( {i,j} map -- state )
 GENERIC: all-obstacles ( map -- obstacles )
 GENERIC: map-size ( map -- size )
+GENERIC: random-unexplored ( map -- pos )
 
-: set-obstacle ( {i,j} map obstacle? -- ) OBSTACLE FREE ? set-state ;
+: set-obstacle ( {i,j} map obstacle? -- ) OBSTACLE FREE ? -rot set-state ;
 : is-obstacle? ( {i,j} map -- ? ) state OBSTACLE = ;
 : <map> ( size class -- map ) new init ;
 : toggle-obstacle ( {i,j} map -- ) 
