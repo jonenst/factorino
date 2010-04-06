@@ -1,7 +1,7 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays combinators factorino.maps.general hash-sets kernel
-math math.vectors sequences sets factorino.maps.utils ;
+math math.vectors sequences sets factorino.maps.utils factorino.maps.display.common ;
 IN: factorino.maps.sparse
 
 <PRIVATE
@@ -39,5 +39,6 @@ M: sparse-map state
     ] [ 2drop UNEXPLORED ] if ;
 M: sparse-map all-obstacles map>> members ;
 M: sparse-map map-size size>> ;
-
+M: sparse-map draw-map 
+    all-obstacles swap [ draw-obstacle ] curry each ;
 

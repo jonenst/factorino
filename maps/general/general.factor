@@ -3,14 +3,16 @@
 USING: kernel ;
 IN: factorino.maps.general
 
-CONSTANT: UNEXPLORED 0
-CONSTANT: OBSTACLE   1
-CONSTANT: FREE       2
+CONSTANT: UNEXPLORED  0
+CONSTANT: OBSTACLE    1
+CONSTANT: FREE        2
+CONSTANT: UNREACHABLE 3
 GENERIC: init ( size map -- map )
 GENERIC: neighbours ( {i,j} map -- neighbours )
 GENERIC: set-state ( state {i,j} map -- )
 GENERIC: state ( {i,j} map -- state )
-GENERIC: all-obstacles ( map -- obstacles )
+GENERIC: all-obstacles ( map -- obstacles  )
+GENERIC: draw-map ( gadget map --  )
 GENERIC: map-size ( map -- size )
 GENERIC: random-unexplored ( map -- pos )
 

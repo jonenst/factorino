@@ -1,15 +1,15 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: factorino.driving factorino.maps.sparse factorino.maps.general kernel ;
+USING: factorino.driving factorino.maps.table factorino.maps.general kernel
+factorino.maps.display ;
 IN: factorino.explore
 
 DEFER: explore
-: next-unexplored ( map -- {i,j} ) ;
 : explore-and-loop ( robotino pos map -- )
-    3dup (go-to) [ nip explore ] [ 3drop ] if ;
+    3dup (go-to) [ 2dup [ [ UNREACHABLE ] dip {x,y}>{i,j} ] dip set-state ] unless nip explore ;
 : explore ( robotino map -- )
-    [ next-unexplored ] keep 
+    [ random-unexplored {i,j}>{x,y} ] keep 
     over [ explore-and-loop ] [ 3drop ] if ;
 
 : test-explore ( robotino -- map )
-    { 10000 10000 } \ sparse-map <map> [ explore ] keep ;
+    { 20 20 } \ table-map <map> [ display ] [ explore ] [ ] tri ;

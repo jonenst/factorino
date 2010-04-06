@@ -17,8 +17,8 @@ CONSTANT: MINIMUM-ROTATION 0 ! mm/sec ??
 CONSTANT: MAXIMUM-ROTATION 50 ! mm/sec ??
 CONSTANT: XY-THRESHOLD 10 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
+CONSTANT: OBSTACLE_THRESHOLD 0.5
 
-    CONSTANT: OBSTACLE_THRESHOLD 0.8
 : to-position-speed ( norm -- speed )
     dup 50 > [
     drop 400
@@ -124,7 +124,14 @@ GENERIC: drive-to* ( stop? robotino destination -- blocking-position/f )
     [ unclip pick swap [ f ] 2dip drive-to* [ [ 3drop ] dip ] [ drive-path ] if* ]
     if-empty ;
 
-M: array drive-to* dup first integer? [ drive-xy ] [ drive-path ] if ;
+M: array drive-to* 
+    [ 2drop f ] [ 
+        dup first integer? [ 
+            drive-xy
+        ] [
+            drive-path
+        ] if
+    ] if-empty ;
 M: position drive-to* drive-position ;
 
 : drive-to ( robotino destination -- blocking-position/f )
