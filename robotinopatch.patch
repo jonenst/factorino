@@ -1,0 +1,46 @@
+Index: lib/rec/robotino/com/c/Com.h
+===================================================================
+--- lib/rec/robotino/com/c/Com.h	(révision 553)
++++ lib/rec/robotino/com/c/Com.h	(copie de travail)
+@@ -110,7 +110,16 @@
+ @return Returns TRUE (1) if the communication is active. Returns FALSE (0) if the communication is inactive or if the given ComId is invalid.
+ */
+ DLLEXPORT BOOL Com_isConnected( ComId id );
++				/**
++				Wait until new sensor readings are available.
++				@param timeout The time in milliseconds after which this operation should timeout. If timeout is 0, this does
++				never timeout.
++				@return Returns true if new sensor readings became available while calling this function. Returns false if the operation
++				lasts for more than timeout milliseconds. Also returns false if the connection is closed (either by an error or by calling disconnect).
++				*/
++DLLEXPORT BOOL Com_waitForUpdate( ComId id );
+ 
++
+ //to include all headers at this point is not nice but necessary for using this lib in Matlab
+ //on the other hand you only need to include Com.h to get it all
+ #include "rec/robotino/com/c/AnalogInput.h"
+Index: lib/rec/robotino/com/c/Com.cpp
+===================================================================
+--- lib/rec/robotino/com/c/Com.cpp	(révision 553)
++++ lib/rec/robotino/com/c/Com.cpp	(copie de travail)
+@@ -148,6 +148,20 @@
+ 	}
+ }
+ 
++BOOL Com_waitForUpdate( ComId id )
++{
++	ComPtr com = getCom( id );
++
++	if( com )
++	{
++		return com->waitForUpdate();
++	}
++	else
++	{
++		return FALSE;
++	}
++}
++
+ ComPtr getCom( ComId id )
+ {
+ 	boost::mutex::scoped_lock lk( _comsMutex );
