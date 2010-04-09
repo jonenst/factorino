@@ -105,6 +105,7 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : odometry-y ( robotino -- y ) odometry-id>> Odometry_y ;
 : odometry-xy ( robotino -- {x,y} ) [ odometry-x ] [ odometry-y ] bi 2array ;
 : odometry-phi ( robotino -- phi ) odometry-id>> Odometry_phi ;
+: odometry-position ( robotino -- position ) [ odometry-xy ] [ odometry-phi ] bi <position> ;
 : odometry-set ( robotino {x,y,phi} -- ) [ odometry-id>> ] [ first3 ] bi* Odometry_set throw-when-false ;
 : odometry-reset ( robotino -- ) { 0 0 0 } odometry-set ;
 

@@ -32,14 +32,15 @@ CONSTANT: OBSTACLE_THRESHOLD 0.5
     [ nip odometry-phi neg ] 2bi
     rotate-degrees ;
 : to-position-speed-vector ( robotino position -- speed-vector )
-    to-position-vector [ normalize ] [ norm ] bi to-position-speed v*n ;
+    to-position-vector [ normalize ] [ norm ] bi 
+    dup zero? [ 2drop { 0 0 } ] [ to-position-speed v*n ] if ;
 
 : fit-to-range ( omega -- omega )
     MAXIMUM-ROTATION [ neg ] keep clamp ;
 : adjust-current ( goal current -- goal current )
     2dup > [ 360 + ] [ 360 - ] if ;
 : chose-side ( goal current -- omega )
-    2dup - 180 > [ 
+    2dup - abs 180 > [ 
     adjust-current
     ] when - ;
 : to-position-omega ( robotino position -- omega )
@@ -92,8 +93,8 @@ CONSTANT: FRONT-RANGE 45
 : values-in-range ( robotino range -- values ) 
     dupd front-indices swap [ distance-sensor-voltage ] curry map ;
 : against-obstacle? ( robotino current-direction -- ? )
-    >padding front-range values-in-range
-    supremum OBSTACLE_THRESHOLD > ;
+    >padding dup [ front-range values-in-range
+    supremum OBSTACLE_THRESHOLD > ] [ nip ] if ;
 DEFER: drive-position
 : continue-driving ( stop? robotino position -- blocking-pos/f )
     2dup at-position? [
@@ -123,18 +124,28 @@ GENERIC: drive-to* ( stop? robotino destination -- blocking-position/f )
     [ swap [ stop ] [ drop ] if f ]
     [ unclip pick swap [ f ] 2dip drive-to* [ [ 3drop ] dip ] [ drive-path ] if* ]
     if-empty ;
-
-M: array drive-to* 
-    [ 2drop f ] [ 
-        dup first integer? [ 
-            drive-xy
-        ] [
-            drive-path
-        ] if
-    ] if-empty ;
+PREDICATE: 2d-point < array { 
+        [ length 2 = ] 
+        [ [ real? ] all? ]
+    } 1&& ;
+M: 2d-point drive-to* drive-xy ;
+M: array drive-to* drive-path ;
 M: position drive-to* drive-position ;
 
 : drive-to ( robotino destination -- blocking-position/f )
     [ t ] 2dip drive-to* ;
-
+GENERIC# change-base 1 ( base destination -- new-destinations )
+M: 2d-point change-base {x,y}>> v+ ;
+M: array change-base [ change-base ] curry map ;
+M: position change-base [ [ {x,y}>> ] bi@ v+ ] [ [ phi>> ] bi@ + ] 2bi <position> ;
+UNION: scalar-pos 2d-point position ;
+GENERIC: drive-from-here ( robotino destination -- blocking-pos/f )
+! Can't use unions here because we need 2d-point to be more specific than array
+M: 2d-point drive-from-here 
+    over odometry-position change-base drive-to ;
+M: position drive-from-here 
+    over odometry-position change-base drive-to ;
+M: array drive-from-here 
+    [ drop f ]
+    [ unclip pick swap drive-from-here [ 2nip ] [ drive-from-here ] if* ] if-empty ;
 
