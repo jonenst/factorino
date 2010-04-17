@@ -79,7 +79,11 @@ CONSTANT: OBSTACLE_THRESHOLD 0.5
     direction norm :> r
     r zero? [ f ] [
         direction first2 :> ( x y )
-        y x r + / atan 2 * to-degrees 
+        { [ y zero? ] [ x 0 < ] } 0&& [
+            180
+        ] [
+            y x r + / atan 2 * to-degrees 
+        ] if
     ] if ;
 CONSTANT: FRONT-RANGE 45
 : front-range ( padding -- range ) 
