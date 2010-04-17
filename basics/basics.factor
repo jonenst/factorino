@@ -145,8 +145,8 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 
 
 : <init-robotino> ( -- robotino )
-! "137.194.64.6:8080"
-  "137.194.10.31:8080"
+  "137.194.64.6:8080"
+!  "137.194.10.31:8080"
 !  "127.0.0.1:8080"
     <button-robotino>
     {
