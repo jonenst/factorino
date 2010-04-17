@@ -1,36 +1,45 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: calendar factorino.asserv factorino.basics
-factorino.wall-follower io kernel math math.vectors prettyprint
-sequences threads tools.time math.ranges ;
+USING: assocs calendar combinators factorino.asserv factorino.basics
+factorino.wall-follower io kernel math math.ranges math.vectors
+prettyprint sequences threads tools.time math.functions ;
 FROM: factorino.asserv => stop ;
 IN: factorino.sensor-calibration
 
 CONSTANT: MOVING-THRESHOLD 1e-9
 CONSTANT: WALL-FOUND 0.8
 CONSTANT: SPEED 500
-CONSTANT: FACE-THRESHOLD 0.5 
+CONSTANT: APPROACH-SPEED 30
+CONSTANT: MEASURE-SPEED 100
+CONSTANT: FACE-THRESHOLD 3 
 : moving? ( robotino -- ? )
     [ 
         [ odometry-xy ]
-        100 milliseconds sleep
-        [ com-wait-for-update* ]
+        ! 100 milliseconds sleep
+        [ [ com-wait-for-update* ] curry 3 swap times ]
         [ odometry-xy ] tri
     ] benchmark
     dup "time was : " write . 
     [ v- norm ] dip / 
-    dup "observed velocity is " write . "---" print MOVING-THRESHOLD > ;
+    dup "observed velocity is " write 9 10^ * 
+    . "---" print MOVING-THRESHOLD > ;
 
     
 : wall-direction ( robotino -- dir )
     [ biggest-sensor ] [ escape-vectors ] bi nth ;
 : found-wall? ( robotino -- ? )
     biggest-sensor-value dup "biggest sensor value : " write . WALL-FOUND > ;
-: go-towards-wall ( robotino -- )
-    dup wall-direction SPEED v*n 0 omnidrive-set-velocity ;
-: find-wall ( robotino -- )
-    [ go-towards-wall ]
-    [ dup found-wall? [ stop ] [ 50 milliseconds sleep find-wall ] if ] bi ;
+: go-towards-wall ( robotino speed -- )
+    over wall-direction n*v 0 omnidrive-set-velocity ;
+: flat-wall? ( robotino -- ? ) drop t ;
+: go-away ( robotino -- ) drop ;
+: find-flat-wall ( robotino -- )
+    [ SPEED go-towards-wall ]
+    [ dup found-wall? [ 
+        dup flat-wall? [ stop ] [ [ go-away ] [ find-flat-wall ] bi ] if
+    ] [
+        50 milliseconds sleep find-flat-wall 
+    ] if ] bi ;
 
 : neighbour-sensors ( i -- i1 i2 )
     1 [ + ] [ - ] 2bi [ num-distance-sensors rem ] bi@ ; 
@@ -48,19 +57,26 @@ CONSTANT: FACE-THRESHOLD 0.5
         drop stop 
     ] if ;
 : touch-wall ( robotino -- )
-    [ go-towards-wall ]
+    [ APPROACH-SPEED go-towards-wall ]
     [ [ dup moving? ] loop stop  ] bi ;
-: measure-distances ( robotino -- calibration-table )
-    0 40 20 <range> 
+: measure-distances ( wall-sensor robotino -- calibration-table )
+    0 500 20 <range> 
     [
-        drop dup wall-direction vneg 20 v*n dupd drive-from-here . 
-        biggest-sensor-value
-    ] with map ;
+        -rot {
+            [ wall-direction vneg 20 v*n ]
+            ! TODO: don't accumulate errors
+            [ swap drive-from-here 
+                [ drop "error in calibration" throw ] when ] 
+            [ face-wall ] 
+            [ distance-sensor-voltage ]
+        } cleave
+    ] with with { } map>assoc ;
 
 : calibrate-sensors ( robotino -- calibration-table )
     { 
-        [ find-wall ]
+        [ find-flat-wall ]
         [ face-wall ]
+        [ biggest-sensor ]
         [ touch-wall ] 
         [ measure-distances ]
     } cleave ;
