@@ -138,18 +138,15 @@ M: position drive-to* drive-position ;
 
 : drive-to ( robotino destination -- blocking-position/f )
     [ t ] 2dip drive-to* ;
-GENERIC# change-base 1 ( base destination -- new-destinations )
-M: 2d-point change-base {x,y}>> v+ ;
+GENERIC# change-base 1 ( destination base -- new-destinations )
+M: 2d-point change-base [ nip {x,y}>> ] [ phi>> to-radian rotate ] 2bi v+ ;
 M: array change-base [ change-base ] curry map ;
-M: position change-base [ [ {x,y}>> ] bi@ v+ ] [ [ phi>> ] bi@ + ] 2bi <position> ;
-UNION: scalar-pos 2d-point position ;
-GENERIC: drive-from-here ( robotino destination -- blocking-pos/f )
-! Can't use unions here because we need 2d-point to be more specific than array
-M: 2d-point drive-from-here 
+M: position change-base [ [ {x,y}>> ] dip change-base ] [ [ phi>> ] bi@ + ] 2bi <position> ;
+! All destinations in initial base
+: drive-from-here ( robotino destination -- blocking-pos/f )
     over odometry-position change-base drive-to ;
-M: position drive-from-here 
-    over odometry-position change-base drive-to ;
-M: array drive-from-here 
+! All relative destinations
+: drive-from-here* ( robotino destination -- blocking-pos/f )
     [ drop f ]
     [ unclip pick swap drive-from-here [ 2nip ] [ drive-from-here ] if* ] if-empty ;
 
