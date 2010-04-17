@@ -143,8 +143,10 @@ M: 2d-point change-base [ nip {x,y}>> ] [ phi>> to-radian rotate ] 2bi v+ ;
 M: array change-base [ change-base ] curry map ;
 M: position change-base [ [ {x,y}>> ] dip change-base ] [ [ phi>> ] bi@ + ] 2bi <position> ;
 ! All destinations in initial base
+: from-robotino-base ( robotino destination -- robotino new-destinations )
+    over odometry-position change-base ;
 : drive-from-here ( robotino destination -- blocking-pos/f )
-    over odometry-position change-base drive-to ;
+    from-robotino-base drive-to ;
 ! All relative destinations
 : drive-from-here* ( robotino destination -- blocking-pos/f )
     [ drop f ]
