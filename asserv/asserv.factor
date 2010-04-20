@@ -43,12 +43,15 @@ CONSTANT: OBSTACLE_THRESHOLD 0.5
     2dup - abs 180 > [ 
     adjust-current
     ] when - ;
+: (to-position-omega) ( robotino phi -- omega )
+    [ odometry-phi ] [ ] bi* 
+    swap chose-side OMEGA-MULTIPLIER * 
+    fit-to-range ;
+
 : to-position-omega ( robotino position -- omega )
     dup phi>> [
-        [ odometry-phi ] [ phi>> ] bi* 
-        swap chose-side OMEGA-MULTIPLIER * 
-        fit-to-range
-    ] [
+        phi>> (to-position-omega)
+            ] [
         drop current-direction>> phi>>  
     ] if ;
 
@@ -62,12 +65,14 @@ CONSTANT: OBSTACLE_THRESHOLD 0.5
     ] [ 
         2drop t 
     ] if ;
-: theta-at-position? ( robotino position -- ? )
-    dup phi>> [ 
-        [ odometry-phi ] [ phi>> ] bi* angular-distance PHI-THRESHOLD <
+: (theta-at-position?) ( robotino phi -- ? )
+    dup [ 
+        [ odometry-phi ] [ ] bi* angular-distance PHI-THRESHOLD <
     ] [
         2drop t
     ] if ;
+: theta-at-position? ( robotino position -- ? )
+    phi>> (theta-at-position?) ;
 : at-position? ( robotino position -- ? )
     { [ xy-at-position? ] [ theta-at-position? ] } 2&& ;
 
@@ -151,4 +156,11 @@ M: position change-base [ [ {x,y}>> ] dip change-base ] [ [ phi>> ] bi@ + ] 2bi 
 : drive-from-here* ( robotino destination -- blocking-pos/f )
     [ drop f ]
     [ unclip pick swap drive-from-here [ 2nip ] [ drive-from-here ] if* ] if-empty ;
+    
+: rotate-to ( robotino phi -- )
+    [ fix-angle (to-position-omega) ]
+    [ drop swap [ { 0 0 } ] dip omnidrive-set-velocity ]
+    [ 2dup (theta-at-position?) [ drop stop ] [ rotate-to ] if ] 2tri ;
+: rotate-from-here ( robotino phi -- )
+    dupd [ odometry-phi ] dip + rotate-to ;
 
