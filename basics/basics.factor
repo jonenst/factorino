@@ -1,6 +1,6 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors arrays byte-arrays calendar combinators
+USING: accessors assocs arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors
 namespaces prettyprint sequences system threads
@@ -94,7 +94,19 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : sensors-values ( robotino -- values ) sensors-id>> [ dup [ DistanceSensor_voltage ] when ] map ;
 : sensors-headings ( robotino -- values ) sensors-id>> [ dup [ DistanceSensor_heading ] when ] map ;
 
-: sensor-distance ( value -- distance ) 0.1 + recip ;
+: surrounding-values ( calibration-table value -- keys )
+    [ values dup rest zip ] [ [ swap first2 between? ] curry ] bi* find nip ;
+: values>keys ( calibration-table keys -- distances )
+    [ swap value-at ] with map ;
+: calc-barycentre ( a b c -- x )
+    rot [ - ] curry bi@ swap / ;
+: barycentre ( a b x -- c )
+    [ [ swap - ] dip * ] [ 2drop ] 3bi + ;
+:: value>distance ( calibration-table value -- distance )
+    calibration-table value surrounding-values :> surrounding-values
+    calibration-table surrounding-values values>keys :> surrounding-keys
+    surrounding-values first2 value calc-barycentre :> x
+    surrounding-keys first2 x barycentre ;
 
 : odometry-construct ( robotino -- ) 
     Odometry_construct >>odometry-id 
