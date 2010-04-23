@@ -149,18 +149,16 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
         [ omnidrive-destroy* ]
         [ com-destroy* ] 
     } cleave ;
-: kill-button ( robotino -- robotino )
-    "KILL ME!" over [ kill-robotino drop ] curry <border-button> [ "kill-switch" open-window ] curry with-ui ;
-
-: <button-robotino> ( adress -- robotino )
-    <robotino> kill-button ;
-
+: kill-button ( robotino -- button )
+    "KILL ME!" swap [ kill-robotino drop ] curry <border-button> ;
+: kill-window ( robotino -- )
+    kill-button [ "kill-switch" open-window ] curry with-ui ;
 
 : <init-robotino> ( -- robotino )
   "137.194.64.6:8080"
 !  "137.194.10.31:8080"
 !  "127.0.0.1:8080"
-    <button-robotino>
+   <robotino> 
     {
         [ omnidrive-construct ]
         [ odometry-construct ]
@@ -169,3 +167,6 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
         [ ] 
     }
     cleave ;
+
+: <button-robotino> ( -- robotino )
+    <init-robotino> dup kill-window ;

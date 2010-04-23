@@ -1,6 +1,6 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: assocs calendar combinators factorino.asserv factorino.basics
+USING: accessors assocs calendar combinators factorino.asserv factorino.basics
 factorino.wall-follower io kernel math math.ranges math.vectors
 prettyprint sequences threads tools.time math.functions math.constants 
 random fry ;
@@ -123,11 +123,16 @@ CONSTANT: FACE-THRESHOLD 3
     2dup sensor-direction vneg 400 20 line
     measure-distances-at* ;
 
-: calibrate-sensors ( robotino -- calibration-table )
+: reasonnable-table? ( table -- ? )
+    drop t ;
+: ?assign-table ( table robotino -- ? )
+    over reasonnable-table? [ (>>calibration-table) t ] [ 2drop f ] if ;
+: calibrate-sensors ( robotino -- calibrated? )
     { 
         [ find-flat-wall ]
         [ face-flat-wall ]
         [ biggest-sensor ]
         [ touch-wall ] 
         [ measure-distances ]
+        [ ?assign-table ]
     } cleave ;
