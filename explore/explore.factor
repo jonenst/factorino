@@ -12,4 +12,4 @@ DEFER: explore
     over [ explore-and-loop ] [ 3drop ] if ;
 
 : test-explore ( robotino -- map )
-    { 20 20 } \ table-map <map> [ display ] [ explore ] [ ] tri ;
+    { 20 20 } \ table-map <map> display [ explore ] keep ;

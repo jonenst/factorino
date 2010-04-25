@@ -61,4 +61,4 @@ CONSTANT: cell-size 100
         ] [ t ] if
     ] [ f ] if ;
 : go-to ( robotino position -- arrived? )
-   { 10000 10000 } cell-size v/n \ sparse-map <map> [ display ] [ (go-to) ] bi ;
+   { 10000 10000 } cell-size v/n \ sparse-map <map> display (go-to)  ;

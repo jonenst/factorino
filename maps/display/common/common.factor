@@ -5,7 +5,7 @@ math sequences opengl math.functions factorino.maps.general colors.constants
 combinators ;
 IN: factorino.maps.display.common
 
-TUPLE: map-gadget < gadget map alarm zoom origin-offset in-drag-origin-offset ; 
+TUPLE: map-gadget < gadget map zoom origin-offset in-drag-origin-offset ; 
 
 : screen-size ( gadget -- dim ) rect-bounds nip ;
 : screen-cell-size ( gadget -- dim ) [ screen-size ] [ zoom>> ] bi v* [ round >integer ] map ;

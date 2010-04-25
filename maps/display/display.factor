@@ -1,9 +1,10 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors alarms arrays calendar colors combinators
-factorino.maps.general factorino.maps.display.common kernel math math.functions
-math.rectangles math.vectors opengl sequences ui ui.gadgets
-ui.gestures ui.render namespaces ui.tools.listener io prettyprint ;
+delegate factorino.maps.display.common factorino.maps.general
+io kernel math math.functions math.rectangles math.vectors
+namespaces opengl prettyprint sequences ui ui.gadgets
+ui.gestures ui.render ui.tools.listener ;
 IN: factorino.maps.display
 
 <PRIVATE
@@ -21,18 +22,20 @@ IN: factorino.maps.display
 M: map-gadget pref-dim* drop { 400 400 } ;
 
 M: map-gadget draw-gadget* dup map>> draw-map ;
-M: map-gadget graft* dup [ relayout-1 ] curry 200 milliseconds every >>alarm drop ;
-M: map-gadget ungraft* alarm>> cancel-alarm ;
 : zoom-multiplier ( dir -- multiplier )
 { { -1 [ 1.1 ] }
   { 1  [ 1.1 recip ] }
 } case ;
 map-gadget H{
-    { T{ button-down f f 1 } [ [ mouse-pos ] [ map>> ] bi toggle-obstacle ] } 
-    { T{ button-up f f 3 } [ dup origin-offset>> >>in-drag-origin-offset drop ] } 
-    { T{ drag f 3 } [ dup in-drag-origin-offset>> drag-loc v+ >>origin-offset drop ] }
-    { mouse-scroll [ scroll-direction get second zoom-multiplier [ v*n ] curry change-zoom drop ] }
-    } set-gestures
-PRIVATE>
+    { T{ button-down f f 1 } [ [ mouse-pos ] [ toggle-obstacle ] bi ] } 
+    { T{ button-up f f 3 } [ dup origin-offset>> >>in-drag-origin-offset relayout-1 ] } 
+    { T{ drag f 3 } [ dup in-drag-origin-offset>> drag-loc v+ >>origin-offset relayout-1 ] }
+    { mouse-scroll [ scroll-direction get second zoom-multiplier [ v*n ] curry change-zoom relayout-1 ] }
+} set-gestures
 
-: display ( map -- ) [ <map-gadget> "Map" open-window ] curry with-ui ;
+PROTOCOL: just-delegate init neighbours state all-obstacles map-size random-unexplored ;
+CONSULT: just-delegate map-gadget map>> ;
+PRIVATE>
+: display ( map -- map-gadget ) <map-gadget> [ [ "Map" open-window ] curry with-ui ] keep ;
+M: map-gadget set-state [ map>> set-state ] [ relayout-1 ] bi ;
+
