@@ -31,9 +31,13 @@ CONSTANT: OBSTACLE_THRESHOLD 1
     [ [ {x,y}>> ] [ odometry-xy ] bi* v- ]
     [ nip odometry-phi neg ] 2bi
     rotate-degrees ;
+: merge-vectors ( to-position previous-dir -- result )
+    [ [ + 2 / ] 2map ] when* ;
+
 : to-position-speed-vector ( robotino position -- speed-vector )
-    to-position-vector [ normalize ] [ norm ] bi 
-    dup zero? [ 2drop { 0 0 } ] [ to-position-speed v*n ] if ;
+    [ to-position-vector [ normalize ] [ norm ] bi 
+    dup zero? [ 2drop { 0 0 } ] [ to-position-speed v*n ] if ]
+    [ drop current-direction>> ] 2bi merge-vectors ;
 
 : fit-to-range ( omega -- omega )
     MAXIMUM-ROTATION [ neg ] keep clamp ;
