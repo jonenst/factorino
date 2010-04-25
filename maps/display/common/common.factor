@@ -5,7 +5,7 @@ math sequences opengl math.functions factorino.maps.general colors.constants
 combinators ;
 IN: factorino.maps.display.common
 
-TUPLE: map-gadget < gadget map zoom origin-offset in-drag-origin-offset ; 
+TUPLE: map-gadget < gadget map zoom origin-offset in-drag-origin-offset current-path robotino-position ; 
 
 : screen-size ( gadget -- dim ) rect-bounds nip ;
 : screen-cell-size ( gadget -- dim ) [ screen-size ] [ zoom>> ] bi v* [ round >integer ] map ;
@@ -32,6 +32,8 @@ TUPLE: map-gadget < gadget map zoom origin-offset in-drag-origin-offset ;
         { OBSTACLE    [ COLOR: black ] }
         { UNEXPLORED  [ COLOR: gray ] } 
         { UNREACHABLE [ COLOR: red ] } 
+        { ROBOTINO    [ COLOR: pink ] } 
+        { CURRENT-PATH [ COLOR: cyan ] } 
         [ drop COLOR: white ]
     } case gl-color ;
 

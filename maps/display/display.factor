@@ -4,7 +4,7 @@ USING: accessors alarms arrays calendar colors combinators
 delegate factorino.maps.display.common factorino.maps.general
 io kernel math math.functions math.rectangles math.vectors
 namespaces opengl prettyprint sequences ui ui.gadgets
-ui.gestures ui.render ui.tools.listener ;
+ui.gestures ui.render ui.tools.listener threads ;
 IN: factorino.maps.display
 
 <PRIVATE
@@ -12,16 +12,24 @@ IN: factorino.maps.display
 : mouse-pos ( gadget -- {i,j} ) dup hand-rel screen>map ;
 
 : full-screen-zoom ( gadget -- zoom ) 
-    map>> map-size [ 1 + recip ] map ;
-
+    map-size [ recip ] map ;
+: full-screen-offset ( gadget -- offset )
+    [ screen-cell-size ] [ map-size ] bi
+    [ odd? [ drop 0 ] [ 2 / ] if ] 2map invert-y ;
+: apply-full-screen-offset ( gadget -- )
+    dup full-screen-offset >>origin-offset drop ;
+: draw-robotino ( gadget -- )
+    [ robotino-position>> ] keep over [ ROBOTINO draw-state ] [ 2drop ] if ;
+: draw-current-path ( gadget -- )
+    [ current-path>> ] keep over [ [ CURRENT-PATH draw-state ] curry each ] [ 2drop ] if ;
 : <map-gadget> ( map -- gadget ) 
     map-gadget new swap >>map
     dup full-screen-zoom >>zoom
-    { 0 0 } >>origin-offset
+    dup full-screen-offset >>origin-offset
     { 0 0 } >>in-drag-origin-offset ;
 M: map-gadget pref-dim* drop { 400 400 } ;
-
-M: map-gadget draw-gadget* dup map>> draw-map ;
+M: map-gadget draw-gadget* 
+    [ dup map>> draw-map ] [ draw-current-path ] [ draw-robotino ] tri ;
 : zoom-multiplier ( dir -- multiplier )
 { { -1 [ 1.1 ] }
   { 1  [ 1.1 recip ] }
@@ -36,6 +44,10 @@ map-gadget H{
 PROTOCOL: just-delegate init neighbours state all-obstacles map-size random-unexplored ;
 CONSULT: just-delegate map-gadget map>> ;
 PRIVATE>
-: display ( map -- map-gadget ) <map-gadget> [ [ "Map" open-window ] curry with-ui ] keep ;
+: update-current-path ( map path -- )
+   >>current-path relayout-1 ;
+: update-robotino-position ( map pos -- )
+   >>robotino-position relayout-1 ;
+: display ( map -- map-gadget ) <map-gadget> [ [ "Map" open-window ] curry with-ui ] keep yield dup apply-full-screen-offset ;
 M: map-gadget set-state [ map>> set-state ] [ relayout-1 ] bi ;
 

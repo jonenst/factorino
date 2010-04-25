@@ -3,10 +3,12 @@
 USING: kernel ;
 IN: factorino.maps.general
 
-CONSTANT: UNEXPLORED  0
-CONSTANT: OBSTACLE    1
-CONSTANT: FREE        2
-CONSTANT: UNREACHABLE 3
+CONSTANT: UNEXPLORED   0
+CONSTANT: OBSTACLE     1
+CONSTANT: FREE         2
+CONSTANT: UNREACHABLE  3
+CONSTANT: ROBOTINO     4
+CONSTANT: CURRENT-PATH 5
 GENERIC: init ( size map -- map )
 GENERIC: neighbours ( {i,j} map -- neighbours )
 GENERIC: set-state ( state {i,j} map -- )
