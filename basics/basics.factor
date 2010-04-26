@@ -171,3 +171,6 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 
 : <button-robotino> ( -- robotino )
     <init-robotino> dup kill-window ;
+
+: (merge-vectors) ( to-position previous-dir -- result )
+    [ [ 0.3 barycentre ] 2map dup . ] when* ;

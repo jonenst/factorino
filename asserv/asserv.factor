@@ -27,13 +27,11 @@ CONSTANT: OBSTACLE_THRESHOLD 1.3
     [ [ {x,y}>> ] [ odometry-xy ] bi* v- ]
     [ nip odometry-phi neg ] 2bi
     rotate-degrees ;
-: merge-vectors ( to-position previous-dir -- result )
-    [ [ 0.9 barycentre ] 2map dup . ] when* ;
 
 : to-position-speed-vector ( robotino position -- speed-vector )
     [ to-position-vector [ normalize ] [ norm ] bi 
     dup zero? [ 2drop { 0 0 } ] [ to-position-speed v*n ] if ]
-    [ drop current-direction>> {x,y}>> ] 2bi merge-vectors ;
+    [ drop current-direction>> {x,y}>> ] 2bi (merge-vectors) ;
 
 : fit-to-range ( omega -- omega )
     MAXIMUM-ROTATION [ neg ] keep clamp ;
@@ -76,7 +74,9 @@ CONSTANT: OBSTACLE_THRESHOLD 1.3
 : low-speed? ( robotino -- ? )
     current-direction>> [ {x,y}>> norm STOP-SPEED < ] [ t ] if* ;
 : at-position? ( robotino position -- ? )
-    { [ xy-at-position? ] [ theta-at-position? ] [ drop low-speed? ] } 2&& ;
+    { [ xy-at-position? ] [ theta-at-position? ] 
+    ! [ drop low-speed? ]
+    } 2&& ;
 
 : stop ( robotino -- ) { 0 0 } 0 omnidrive-set-velocity ;
 
@@ -114,7 +114,7 @@ DEFER: drive-position
         drive-position
     ] if ;
 
-:: drive-position ( stop? robotino position -- blocking-pos/f )
+:: (drive-position) ( stop? robotino position quot -- blocking-pos/f )
     robotino position go-position :> current-dir
     robotino current-dir against-obstacle? [
         robotino stop position
@@ -123,7 +123,9 @@ DEFER: drive-position
         ! WTF, com-wait-for-update* is blocking !! 
         yield
         stop? robotino position continue-driving
-    ] if ;
+    ] if quot call( -- ) ;
+: drive-position ( stop? robotino position -- blocking-pos/f )
+    [ ] (drive-position) ; inline
 
 : drive-origin ( robotino -- blocking-position/f )
     [ t ] dip T{ position f { 0 0 } 0 } drive-position ;

@@ -39,7 +39,7 @@ CONSTANT: cell-size 100
 ! FUCK
 ! C'est quoi ce mot ?!?!? @FUUUU
 :: (go-to) ( robotino position the-map -- arrived? )
-    robotino set-rotating
+  !  robotino set-rotating
     robotino odometry-xy position
     [ {x,y}>{i,j} ] bi@
     over :> current-position
