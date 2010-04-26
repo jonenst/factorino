@@ -9,7 +9,7 @@ IN: factorino.sensor-calibration
 
 CONSTANT: MOVING-THRESHOLD 1e-9
 CONSTANT: WALL-FOUND 0.5
-CONSTANT: SPEED 500
+CONSTANT: SPEED 200
 CONSTANT: APPROACH-SPEED 30
 CONSTANT: MEASURE-SPEED 100
 CONSTANT: FACE-THRESHOLD 3 
@@ -29,8 +29,8 @@ CONSTANT: FACE-THRESHOLD 3
     [ v- norm ] dip / 
     dup "observed velocity is " write 9 10^ * 
     . "---" print 
-    drop f ;
-    ! MOVING-THRESHOLD > ;
+    ! drop f ;
+    MOVING-THRESHOLD > ;
 : sensor-direction ( i robotino -- dir ) escape-vectors nth ;
 : wall-direction ( robotino -- dir ) [ biggest-sensor ] keep sensor-direction ;
 : found-wall? ( robotino -- ? )

@@ -12,19 +12,14 @@ IN: factorino.asserv
 CONSTANT: SPEED-MULTIPLIER 8
 CONSTANT: OMEGA-MULTIPLIER 3
 CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
-CONSTANT: MAXIMUM-SPEED 500 ! mm/sec ??
-CONSTANT: MINIMUM-ROTATION 0 ! mm/sec ??
+CONSTANT: MAXIMUM-SPEED 200 ! mm/sec ??
 CONSTANT: MAXIMUM-ROTATION 50 ! mm/sec ??
 CONSTANT: XY-THRESHOLD 10 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
-CONSTANT: OBSTACLE_THRESHOLD 1
+CONSTANT: OBSTACLE_THRESHOLD 1.3
 
 : to-position-speed ( norm -- speed )
-    dup 50 > [
-    drop 400
-    ] [
-        SPEED-MULTIPLIER *
-    ] if ;
+    SPEED-MULTIPLIER * 0 MAXIMUM-SPEED clamp ;
 
 : to-position-vector ( robotino position -- vector )
     swap
