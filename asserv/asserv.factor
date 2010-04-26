@@ -49,8 +49,12 @@ CONSTANT: OBSTACLE_THRESHOLD 1.3
 : to-position-omega ( robotino position -- omega )
     dup phi>> [
         phi>> (to-position-omega)
-            ] [
-        drop current-direction>> phi>>  
+    ] [
+        over initial-angle>> [
+            drop dup initial-angle>> (to-position-omega)
+        ] [
+            drop current-direction>> phi>>  
+        ] if
     ] if ;
 
 : go-position ( robotino position -- current-dir )
@@ -78,7 +82,7 @@ CONSTANT: OBSTACLE_THRESHOLD 1.3
     ! [ drop low-speed? ]
     } 2&& ;
 
-: stop ( robotino -- ) { 0 0 } 0 omnidrive-set-velocity ;
+: stop ( robotino -- ) [ { 0 0 } 0 omnidrive-set-velocity ] [ f >>initial-angle drop ] bi ;
 
 : print-position ( robotino -- robotino )
     [ [ odometry-xy ] [ odometry-phi ] bi "Position : " . . . ] keep ;
@@ -92,6 +96,10 @@ CONSTANT: OBSTACLE_THRESHOLD 1.3
             y x r + / atan 2 * to-degrees 
         ] if
     ] if ;
+: calc-initial-angle ( robotino position -- angle )
+    swap odometry-xy v- >padding ;
+: assign-initial-angle ( robotino position -- )
+    dupd calc-initial-angle >>initial-angle drop ;
 CONSTANT: FRONT-RANGE 45
 : front-range ( padding -- range ) 
     FRONT-RANGE [ - ] [ + ] 2bi 2array ;
@@ -141,7 +149,7 @@ PREDICATE: 2d-point < array {
         [ length 2 = ] 
         [ [ real? ] all? ]
     } 1&& ;
-M: 2d-point drive-to* drive-xy ;
+M: 2d-point drive-to* 2dup assign-initial-angle drive-xy ;
 M: array drive-to* drive-path ;
 M: position drive-to* drive-position ;
 

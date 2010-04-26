@@ -155,8 +155,8 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     kill-button [ "kill-switch" open-window ] curry with-ui ;
 
 : <init-robotino> ( -- robotino )
-    "172.26.201.1"
-!  "137.194.64.6:8080"
+!    "172.26.201.1"
+  "137.194.64.6:8080"
 !  "137.194.10.31:8080"
 !  "127.0.0.1:8080"
    <robotino> 
