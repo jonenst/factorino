@@ -1,6 +1,8 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: factorino.driving factorino.maps.table factorino.maps.general kernel
+USING: factorino.driving factorino.maps.table
+factorino.maps.general kernel
+factorino.driving.utils
 factorino.maps.display ;
 IN: factorino.explore
 
@@ -12,4 +14,5 @@ DEFER: explore
     over [ explore-and-loop ] [ 3drop ] if ;
 
 : test-explore ( robotino -- map )
-    { 20 20 } \ table-map <map> display [ explore ] keep ;
+    { 20 20 } \ table-map <map> display
+    2dup register-robotino [ explore ] keep ;

@@ -1,17 +1,14 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors factorino.asserv factorino.basics
-factorino.maps.general factorino.maps.sparse factorino.types inverse
+factorino.maps.general factorino.maps.sparse factorino.types
+factorino.driving.utils
 io kernel locals factorino.maps.display ui
 math math.functions math.vectors path-finding prettyprint
 sequences sets threads ;
 FROM: factorino.maps.general => neighbours ;
 IN: factorino.driving
 
-CONSTANT: cell-size 100
-: set-rotating ( robotino -- ) { 0 0 } 50 omnidrive-set-velocity ;
-: {x,y}>{i,j} ( {x,y} -- {i,j} ) cell-size [ /i ] curry map ;
-: {i,j}>{x,y} ( {i,j} -- {x,x} ) cell-size [ * ] curry map ;
 
 ! TODO: subclass astar to use optimizing compiler
 : <my-astar> ( map -- astar ) 
@@ -32,9 +29,11 @@ CONSTANT: cell-size 100
     [ odometry-xy {x,y}>{i,j} ] dip = ;
 : go-back-when-obstacle ( robotino cell-path obstacle -- )
     over index swap nth drive-to drop ; 
+: go-end ( robotino cell-path -- )
+    [ drop ] [ last drive-to drop ] if-empty ;
 ! TODO GO back the whole way if we have to !
 : ?go-back ( cell-path robotino obstacle -- )
-    2dup is-on? [ swapd go-back-when-obstacle ] [ 3drop ] if ;
+    2dup is-on? [ drop swap go-end ] [ 3drop ] if ;
     
 ! FUCK
 ! C'est quoi ce mot ?!?!? @FUUUU
@@ -48,19 +47,23 @@ CONSTANT: cell-size 100
     "COUCOU" write yield
     find-path :> cell-path
     cell-path "cell path is : " write .
-    the-map "Map is : " write .
+    ! TODO: the next line forces to use a map-gadget map.
+    the-map "Map is : " write map>> .
     yield
     ! TODO: the next line forces to use a map-gadget map.
     the-map cell-path update-current-path
     cell-path [
+        cell-path empty? [ t ] [
+        cell-path unclip [ FREE ] dip the-map set-state
+        :> cell-path
         robotino cell-path explore-path :> ( free-cells obstacle ) 
         free-cells the-map mark-free
         obstacle [
-            cell-path robotino obstacle ?go-back
+            free-cells robotino obstacle ?go-back
             obstacle "adding obstacle @" write . yield
             obstacle the-map t set-obstacle 
             robotino position the-map (go-to)
-        ] [ t ] if
+        ] [ t ] if ] if
     ] [ f ] if ;
 : go-to ( robotino position -- arrived? )
    { 10000 10000 } cell-size v/n \ sparse-map <map> display (go-to)  ;

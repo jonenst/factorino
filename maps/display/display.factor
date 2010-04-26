@@ -4,7 +4,8 @@ USING: accessors alarms arrays calendar colors combinators
 delegate factorino.maps.display.common factorino.maps.general
 io kernel math math.functions math.rectangles math.vectors models
 namespaces opengl prettyprint sequences ui ui.gadgets
-ui.gestures ui.render ui.tools.listener threads factorino.types factorino.driving ;
+ui.gestures ui.render ui.tools.listener threads 
+factorino.types factorino.driving.utils ;
 IN: factorino.maps.display
 
 <PRIVATE
@@ -56,3 +57,5 @@ M: map-gadget model-changed
    !  { [ map-model? ] [ 2drop ] } 
     } cond ;
 
+: register-robotino ( robotino map-gadget -- )
+    swap current-position>> add-connection ;

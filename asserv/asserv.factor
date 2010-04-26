@@ -13,8 +13,8 @@ CONSTANT: SPEED-MULTIPLIER 8
 CONSTANT: OMEGA-MULTIPLIER 3
 CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
 CONSTANT: STOP-SPEED 20 ! mm/sec ??
-CONSTANT: MAXIMUM-SPEED 200 ! mm/sec ??
-CONSTANT: MAXIMUM-ROTATION 50 ! mm/sec ??
+CONSTANT: MAXIMUM-SPEED 300 ! mm/sec ??
+CONSTANT: MAXIMUM-ROTATION 80 ! mm/sec ??
 CONSTANT: XY-THRESHOLD 10 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
 CONSTANT: OBSTACLE_THRESHOLD 1.3
@@ -149,7 +149,16 @@ PREDICATE: 2d-point < array {
         [ length 2 = ] 
         [ [ real? ] all? ]
     } 1&& ;
-M: 2d-point drive-to* 2dup assign-initial-angle drive-xy ;
+    
+: rotate-to ( robotino phi -- )
+    [ fix-angle (to-position-omega) ]
+    [ drop swap [ { 0 0 } ] dip omnidrive-set-velocity ]
+    [ 2dup (theta-at-position?) [ drop stop ] [ rotate-to ] if ] 2tri ;
+: rotate-from-here ( robotino phi -- )
+    dupd [ odometry-phi ] dip + rotate-to ;
+: face-initial-angle ( robotino -- )
+    dup initial-angle>> rotate-to ;
+M: 2d-point drive-to* [ assign-initial-angle ] [ drop face-initial-angle ] [ drive-xy ] 2tri ;
 M: array drive-to* drive-path ;
 M: position drive-to* drive-position ;
 
@@ -168,11 +177,5 @@ M: position change-base [ [ {x,y}>> ] dip change-base ] [ [ phi>> ] bi@ + ] 2bi 
 : drive-from-here* ( robotino destination -- blocking-pos/f )
     [ drop f ]
     [ unclip pick swap drive-from-here [ 2nip ] [ drive-from-here ] if* ] if-empty ;
-    
-: rotate-to ( robotino phi -- )
-    [ fix-angle (to-position-omega) ]
-    [ drop swap [ { 0 0 } ] dip omnidrive-set-velocity ]
-    [ 2dup (theta-at-position?) [ drop stop ] [ rotate-to ] if ] 2tri ;
-: rotate-from-here ( robotino phi -- )
-    dupd [ odometry-phi ] dip + rotate-to ;
+
 
