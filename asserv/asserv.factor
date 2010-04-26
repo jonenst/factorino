@@ -12,6 +12,7 @@ IN: factorino.asserv
 CONSTANT: SPEED-MULTIPLIER 8
 CONSTANT: OMEGA-MULTIPLIER 3
 CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
+CONSTANT: STOP-SPEED 20 ! mm/sec ??
 CONSTANT: MAXIMUM-SPEED 200 ! mm/sec ??
 CONSTANT: MAXIMUM-ROTATION 50 ! mm/sec ??
 CONSTANT: XY-THRESHOLD 10 ! mm ??
@@ -27,12 +28,12 @@ CONSTANT: OBSTACLE_THRESHOLD 1.3
     [ nip odometry-phi neg ] 2bi
     rotate-degrees ;
 : merge-vectors ( to-position previous-dir -- result )
-    [ [ + 2 / ] 2map ] when* ;
+    [ [ 0.9 barycentre ] 2map dup . ] when* ;
 
 : to-position-speed-vector ( robotino position -- speed-vector )
     [ to-position-vector [ normalize ] [ norm ] bi 
     dup zero? [ 2drop { 0 0 } ] [ to-position-speed v*n ] if ]
-    [ drop current-direction>> ] 2bi merge-vectors ;
+    [ drop current-direction>> {x,y}>> ] 2bi merge-vectors ;
 
 : fit-to-range ( omega -- omega )
     MAXIMUM-ROTATION [ neg ] keep clamp ;
@@ -72,8 +73,10 @@ CONSTANT: OBSTACLE_THRESHOLD 1.3
     ] if ;
 : theta-at-position? ( robotino position -- ? )
     phi>> (theta-at-position?) ;
+: low-speed? ( robotino -- ? )
+    current-direction>> [ {x,y}>> norm STOP-SPEED < ] [ t ] if* ;
 : at-position? ( robotino position -- ? )
-    { [ xy-at-position? ] [ theta-at-position? ] } 2&& ;
+    { [ xy-at-position? ] [ theta-at-position? ] [ drop low-speed? ] } 2&& ;
 
 : stop ( robotino -- ) { 0 0 } 0 omnidrive-set-velocity ;
 
