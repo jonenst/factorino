@@ -1,8 +1,8 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors assocs arrays byte-arrays calendar combinators
+USING: accessors alarms assocs arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
-math.constants math.functions math.order math.vectors
+math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads
 factorino.bindings factorino.functor factorino.types ui ui.gadgets.buttons ;
 IN: factorino.basics
@@ -142,8 +142,11 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     \ robotino new-robotino ;
 : robotino-test ( adress -- )
     <robotino> dup omnidrive-construct drive ; 
+: stop-position-refresh ( robotino -- )
+    position-refresh-alarm>> [ cancel-alarm ] when* ;
 : kill-robotino ( robotino -- )
     { 
+        [ stop-position-refresh ]
         [ sensors-destroy* ]
         [ bumper-destroy* ]
         [ omnidrive-destroy* ]
@@ -153,7 +156,12 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     "KILL ME!" swap [ kill-robotino drop ] curry <border-button> ;
 : kill-window ( robotino -- )
     kill-button [ "kill-switch" open-window ] curry with-ui ;
-
+: refresh-position ( robotino -- )
+    [ odometry-position ] [ current-position>> ] bi set-model ;
+: init-position-refresh ( robotino -- )
+    [ dup odometry-position \ robotino-position-model new-model >>current-position drop ]
+    [ [ refresh-position ] curry 200 milliseconds every ]
+    [ (>>position-refresh-alarm) ] tri ;
 : <init-robotino> ( -- robotino )
 !    "172.26.201.1"
   "137.194.64.6:8080"
@@ -165,6 +173,7 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
         [ odometry-construct ]
         [ init-all-sensors ]
         [ odometry-reset ]
+        [ init-position-refresh ]
         [ ] 
     }
     cleave ;

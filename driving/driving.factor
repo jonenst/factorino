@@ -50,9 +50,8 @@ CONSTANT: cell-size 100
     cell-path "cell path is : " write .
     the-map "Map is : " write .
     yield
-    ! TODO: the next 2 lines forces to use a map-gadget map.
+    ! TODO: the next line forces to use a map-gadget map.
     the-map cell-path update-current-path
-    the-map current-position update-robotino-position
     cell-path [
         robotino cell-path explore-path :> ( free-cells obstacle ) 
         free-cells the-map mark-free

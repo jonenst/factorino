@@ -2,9 +2,9 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors alarms arrays calendar colors combinators
 delegate factorino.maps.display.common factorino.maps.general
-io kernel math math.functions math.rectangles math.vectors
+io kernel math math.functions math.rectangles math.vectors models
 namespaces opengl prettyprint sequences ui ui.gadgets
-ui.gestures ui.render ui.tools.listener threads ;
+ui.gestures ui.render ui.tools.listener threads factorino.types factorino.driving ;
 IN: factorino.maps.display
 
 <PRIVATE
@@ -50,4 +50,9 @@ PRIVATE>
    >>robotino-position relayout-1 ;
 : display ( map -- map-gadget ) <map-gadget> [ [ "Map" open-window ] curry with-ui ] keep yield dup apply-full-screen-offset ;
 M: map-gadget set-state [ map>> set-state ] [ relayout-1 ] bi ;
+M: map-gadget model-changed 
+    over { 
+    { [ robotino-position-model? ] [ swap value>> {x,y}>> {x,y}>{i,j} update-robotino-position ] }
+   !  { [ map-model? ] [ 2drop ] } 
+    } cond ;
 
