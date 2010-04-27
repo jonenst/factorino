@@ -117,7 +117,7 @@ CONSTANT: FRONT-RANGE 45
 DEFER: drive-position
 : continue-driving ( stop? robotino position -- blocking-pos/f )
     2dup at-position? [
-        drop swap [ stop ] [ drop ] if f 
+        drop swap [ stop ] [ drop ] if f yield
     ] [
         drive-position
     ] if ;
