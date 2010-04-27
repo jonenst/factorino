@@ -1,7 +1,8 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays continuations combinators factorino.basics kernel
-ui.gadgets ui.gadgets.buttons ui.gadgets.packs ui.gestures math locals sequences ;
+ui.gadgets ui.gadgets.buttons ui.gadgets.packs ui.gestures math locals sequences
+ui.tools.listener ;
 IN: factorino.controller
 
 TUPLE: controller < pack current-robotino
@@ -29,6 +30,7 @@ TUPLE: controller < pack current-robotino
         [ current-robotino>> ] [ vx>> ] [ vy>> ]
         [ multiplier>> [ * ] curry bi@ 2array ] theta-quot } cleave
     omnidrive-set-velocity ; inline
+: no-op ( -- ) ;
 : apply-speed ( controller -- )
     [ theta>> ] (apply-speed) ; 
 \ controller H{
@@ -46,4 +48,7 @@ TUPLE: controller < pack current-robotino
     { T{ key-up f f "d" } [ 00 >>theta apply-speed ] } 
     { T{ key-down f f "f" } [ [ 1.1 * ] change-multiplier drop ] }
     { T{ key-down f f "r" } [ [ 0.9 * ] change-multiplier drop ] }
+    { T{ key-down f f "p" } [ current-robotino>> [ ] curry \ no-op call-listener ] }
     } set-gestures
+
+
