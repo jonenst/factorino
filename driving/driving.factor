@@ -12,8 +12,8 @@ IN: factorino.driving
 
 ! TODO: subclass astar to use optimizing compiler
 : <my-astar> ( map -- astar ) 
-    [ neighbours ] curry
-    [ 2drop 1 ]
+    [ neighbours ] 
+    [ state UNEXPLORED = 1 10000 ? nip ] bi-curry
     [ v- [ abs ] [ + ] map-reduce ]
     <astar> ;
 : >real-path ( cell-path -- real-path ) [ {i,j}>{x,y} ] map ;
