@@ -65,7 +65,9 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : omnidrive-destroy ( robotino -- ) omnidrive-id>> OmniDrive_destroy throw-when-false ;
 :: omnidrive-set-velocity ( robotino v omega -- )
     robotino omnidrive-id>> v first2 omega
-    OmniDrive_setVelocity throw-when-false 
+    [ OmniDrive_setVelocity ] curry 3curry :> the-function
+    the-function call FALSE = [ 20 milliseconds sleep the-function call ] [ TRUE ] if
+    throw-when-false 
     v omega <position> robotino (>>current-direction) ;
 
 : bumper-construct ( robotino -- )
@@ -182,4 +184,4 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     <init-robotino> dup kill-window ;
 
 : (merge-vectors) ( to-position previous-dir -- result )
-    [ [ 0.3 barycentre ] 2map dup . ] when* ;
+    [ [ 0.3 barycentre ] 2map ] when* ;
