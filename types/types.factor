@@ -9,4 +9,4 @@ current-position position-refresh-alarm
 calibration-table
 ;
 TUPLE: robotino-position-model < model ;
-: throw-when-false ( return-code -- ) FALSE = [ "You're fucked" throw ] when ;
+: throw-when-false ( return-code -- ) FALSE = [ "False return code from openrobotino1 lib" throw ] when ;
