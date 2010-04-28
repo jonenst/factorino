@@ -2,9 +2,9 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays continuations combinators factorino.basics kernel
 ui.gadgets ui.gadgets.buttons ui.gadgets.packs ui.gestures math locals sequences
-ui.tools.listener ;
+ui.tools.listener ui ;
 IN: factorino.controller
-
+<PRIVATE
 TUPLE: controller < pack current-robotino
 { vx initial: 0.0 } { vy initial: 0.0 } { theta initial: 0.0 } { multiplier initial: 1 } ; 
 
@@ -19,11 +19,6 @@ TUPLE: controller < pack current-robotino
     [ "init" ] dip [ handle-init ] curry <border-button> ;
 : controller-kill-button ( controller -- button )
     [ "kill" ] dip [ handle-kill ] curry <border-button> ;
-: <controller> ( -- controller )
-    controller new horizontal >>orientation
-    dup init-button add-gadget 
-    dup controller-kill-button add-gadget
-    ;
 :: (apply-speed) ( controller theta-quot -- )
     controller 
     { 
@@ -51,4 +46,11 @@ TUPLE: controller < pack current-robotino
     { T{ key-down f f "p" } [ [ robotino-push ] curry dup last call-listener ] }
     } set-gestures
 
-
+: <controller> ( -- controller )
+    controller new horizontal >>orientation
+    dup init-button add-gadget 
+    dup controller-kill-button add-gadget
+    ;
+PRIVATE>
+: controller ( -- )
+    [ <controller> "controller" open-window ] with-ui ;

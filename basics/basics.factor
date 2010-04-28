@@ -4,25 +4,21 @@ USING: accessors alarms assocs arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads
-factorino.bindings factorino.functor factorino.types ui ui.gadgets.buttons ;
+factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadgets.buttons ;
 IN: factorino.basics
+<PRIVATE
 
-TUPLE: position {x,y} phi ;
-: fix-angle ( angle -- newangle )
-    360 rem dup 180 > [ 360 - ] when ;
-: <position> ( {x,y} phi -- position )
-    dup [ fix-angle ] when position boa ;
-
-: to-degrees ( radian -- degrees ) 180 * pi / ;
-: to-radian ( degrees -- radian ) pi * 180 / ;
-
-: rotate ( vect angle -- vect' ) 
-    [ first2 ] [ [ cos ] [ sin ] bi ] bi*
-    [| x y cos sin | x cos * y sin * -
-                     x sin * y cos * + 2array ] call ;
-: rotate-degrees ( vect angle -- vect' ) 
-    to-radian rotate ;
-
+: surrounding-values ( calibration-table value -- values )
+    {
+        { [ 2dup [ values first ] dip > ] [ drop values 2 head ] }
+        { [ 2dup [ values last ] dip < ] [ drop values 2 tail* ] }
+        [ [ values dup rest zip ] [ [ swap first2 between? ] curry ] bi* find nip ]
+    } cond ;
+: values>keys ( calibration-table values -- distances )
+    [ swap value-at ] with map ;
+: calc-barycentre ( a b c -- x )
+    rot [ - ] curry bi@ swap / ;
+PRIVATE>
 GENERIC: com-destroy* ( identifier -- )
 GENERIC: com-set-address* ( address identifier -- )
 GENERIC: com-address* ( identifier -- address/f )
@@ -92,18 +88,6 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : sensors-values ( robotino -- values ) sensors-id>> [ dup [ DistanceSensor_voltage ] when ] map ;
 : sensors-headings ( robotino -- values ) sensors-id>> [ dup [ DistanceSensor_heading ] when ] map ;
 
-: surrounding-values ( calibration-table value -- values )
-    {
-        { [ 2dup [ values first ] dip > ] [ drop values 2 head ] }
-        { [ 2dup [ values last ] dip < ] [ drop values 2 tail* ] }
-        [ [ values dup rest zip ] [ [ swap first2 between? ] curry ] bi* find nip ]
-    } cond ;
-: values>keys ( calibration-table values -- distances )
-    [ swap value-at ] with map ;
-: calc-barycentre ( a b c -- x )
-    rot [ - ] curry bi@ swap / ;
-: barycentre ( a b x -- c )
-    [ [ swap - ] dip * ] [ 2drop ] 3bi + ;
 :: value>distance ( calibration-table value -- distance )
     calibration-table value surrounding-values :> surrounding-values
     calibration-table surrounding-values values>keys :> surrounding-keys
@@ -126,15 +110,6 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : odometry-set ( robotino {x,y,phi} -- ) [ odometry-id>> ] [ first3 ] bi* Odometry_set throw-when-false ;
 : odometry-reset ( robotino -- ) { 0 0 0 } odometry-set ;
 
-: calc-angle ( previous-time -- angle current-time ) 
-    nano-count [ - pi 2 * * 9 10 ^ / ] keep ;
-:: (drive) ( robotino vector previous-time -- )
-    previous-time calc-angle :> new-time :> angle
-    vector angle rotate :> new-vector
-    robotino new-vector 0 omnidrive-set-velocity
-    50 milliseconds sleep 
-    robotino new-vector new-time (drive) ;
-: drive ( robotino -- ) { 200 0 } nano-count (drive) ;
 
 : new-robotino ( address class -- robotino ) 
     new
@@ -145,8 +120,6 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     [ ] tri ;
 : <robotino> ( address -- robotino ) 
     \ robotino new-robotino ;
-: robotino-test ( adress -- )
-    <robotino> dup omnidrive-construct drive ; 
 : stop-position-refresh ( robotino -- )
     position-refresh-alarm>> [ cancel-alarm ] when* ;
 : kill-robotino ( robotino -- )
@@ -185,6 +158,16 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 
 : <button-robotino> ( -- robotino )
     <init-robotino> dup kill-window ;
-CONSTANT: merge-factor 0.3
-: (merge-vectors) ( to-position previous-dir -- result )
-    [ [ merge-factor barycentre ] 2map ] when* ;
+<PRIVATE
+: calc-angle ( previous-time -- angle current-time ) 
+    nano-count [ - pi 2 * * 9 10 ^ / ] keep ;
+:: (drive) ( robotino vector previous-time -- )
+    previous-time calc-angle :> new-time :> angle
+    vector angle rotate :> new-vector
+    robotino new-vector 0 omnidrive-set-velocity
+    50 milliseconds sleep 
+    robotino new-vector new-time (drive) ; 
+PRIVATE>
+: drive ( robotino -- ) { 200 0 } nano-count (drive) ;
+: robotino-test ( adress -- )
+    <robotino> dup omnidrive-construct drive ; 

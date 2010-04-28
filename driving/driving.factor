@@ -9,11 +9,11 @@ sequences sets threads ;
 FROM: factorino.maps.general => neighbours ;
 IN: factorino.driving
 
-
+<PRIVATE
 ! TODO: subclass astar to use optimizing compiler
 : <my-astar> ( map -- astar ) 
     [ neighbours ] 
-    [ state UNEXPLORED = 1 10000 ? nip ] bi-curry
+    [ state UNEXPLORED = 1 10 ? nip ] bi-curry
     [ v- [ abs ] [ + ] map-reduce ]
     <astar> ;
 : >real-path ( cell-path -- real-path ) [ {i,j}>{x,y} ] map ;
@@ -32,7 +32,8 @@ IN: factorino.driving
 ! TODO GO back the whole way if we have to !
 : ?go-back ( cell-path robotino obstacle -- )
     2dup is-on? [ drop swap go-end ] [ 3drop ] if ;
-    
+
+PRIVATE>
 ! FUCK
 ! C'est quoi ce mot ?!?!? @FUUUU
 :: (go-to) ( robotino position the-map -- arrived? )

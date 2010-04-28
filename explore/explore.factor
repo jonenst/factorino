@@ -7,8 +7,10 @@ factorino.maps.display ;
 IN: factorino.explore
 
 DEFER: explore
+<PRIVATE
 : explore-and-loop ( robotino pos map -- )
     3dup (go-to) [ 2dup [ [ UNREACHABLE ] dip {x,y}>{i,j} ] dip set-state ] unless nip explore ;
+PRIVATE>
 : explore ( robotino map -- )
     [ random-unexplored {i,j}>{x,y} ] keep 
     over [ explore-and-loop ] [ 3drop ] if ;

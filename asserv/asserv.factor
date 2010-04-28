@@ -1,14 +1,19 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays calendar combinators.short-circuit
-factorino.basics io kernel math math.order math.vectors
+factorino.basics factorino.types factorino.utils io kernel math math.order math.vectors
 prettyprint threads sequences locals math.functions tools.time ;
+FROM: factorino.types.private => fix-angle ;
 IN: factorino.asserv
 
+<PRIVATE
 
+: (merge-vectors) ( to-position previous-dir -- result )
+CONSTANT: merge-factor 0.3
+    [ [ merge-factor barycentre ] 2map ] when* ;
 : angular-distance ( a1 a2 -- distance )
     [ - ] [ swap - ] 2bi [ 360 rem ] bi@ min ;
-
+PRIVATE>
 CONSTANT: SPEED-MULTIPLIER 8
 CONSTANT: OMEGA-MULTIPLIER 3
 CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
@@ -35,7 +40,7 @@ CONSTANT: MOVING-THRESHOLD 1e-9
     . "---" print 
     ! drop f ;
     MOVING-THRESHOLD > ;
-
+<PRIVATE
 : to-position-speed ( norm -- speed )
     SPEED-MULTIPLIER * 0 MAXIMUM-SPEED clamp ;
 
@@ -154,8 +159,6 @@ DEFER: drive-position
 : drive-position ( stop? robotino position -- blocking-pos/f )
     [ ] (drive-position) ; inline
 
-: drive-origin ( robotino -- blocking-position/f )
-    [ t ] dip T{ position f { 0 0 } 0 } drive-position ;
 : drive-xy ( stop? robotino {x,y} -- blocking-position/f )
     f <position> drive-position ;
 
@@ -164,29 +167,31 @@ GENERIC: drive-to* ( stop? robotino destination -- blocking-position/f )
     [ swap [ stop ] [ drop ] if f ]
     [ unclip pick swap [ f ] 2dip drive-to* [ [ 3drop ] dip ] [ drive-path ] if* ]
     if-empty ;
-PREDICATE: 2d-point < array { 
-        [ length 2 = ] 
-        [ [ real? ] all? ]
-    } 1&& ;
-    
+PRIVATE> 
 : rotate-to ( robotino phi -- )
     [ fix-angle (to-position-omega) ]
     [ drop swap [ { 0 0 } ] dip omnidrive-set-velocity ]
     [ 2dup (theta-at-position?) [ drop stop ] [ rotate-to ] if ] 2tri ;
 : rotate-from-here ( robotino phi -- )
     dupd [ odometry-phi ] dip + rotate-to ;
+<PRIVATE
 : face-initial-angle ( robotino -- )
     dup initial-angle>> rotate-to ;
 M: 2d-point drive-to* [ assign-initial-angle ] [ drop face-initial-angle ] [ drive-xy ] 2tri ;
 M: array drive-to* drive-path ;
 M: position drive-to* drive-position ;
 
+PRIVATE>
 : drive-to ( robotino destination -- blocking-position/f )
     [ t ] 2dip drive-to* ;
+: drive-origin ( robotino -- blocking-position/f )
+    [ t ] dip T{ position f { 0 0 } 0 } drive-position ;
+<PRIVATE
 GENERIC# change-base 1 ( destination base -- new-destinations )
 M: 2d-point change-base [ nip {x,y}>> ] [ phi>> to-radian rotate ] 2bi v+ ;
 M: array change-base [ change-base ] curry map ;
 M: position change-base [ [ {x,y}>> ] dip change-base ] [ [ phi>> ] bi@ + ] 2bi <position> ;
+PRIVATE>
 ! All destinations in initial base
 : from-robotino-base ( robotino destination -- robotino new-destinations )
     over odometry-position change-base ;
@@ -196,5 +201,4 @@ M: position change-base [ [ {x,y}>> ] dip change-base ] [ [ phi>> ] bi@ + ] 2bi 
 : drive-from-here* ( robotino destination -- blocking-pos/f )
     [ drop f ]
     [ unclip pick swap drive-from-here [ 2nip ] [ drive-from-here ] if* ] if-empty ;
-
 
