@@ -30,7 +30,7 @@ TUPLE: controller < pack current-robotino
         [ current-robotino>> ] [ vx>> ] [ vy>> ]
         [ multiplier>> [ * ] curry bi@ 2array ] theta-quot } cleave
     omnidrive-set-velocity ; inline
-: no-op ( -- ) ;
+: robotino-push ( controller -- robotino ) current-robotino>> ;
 : apply-speed ( controller -- )
     [ theta>> ] (apply-speed) ; 
 \ controller H{
@@ -48,7 +48,7 @@ TUPLE: controller < pack current-robotino
     { T{ key-up f f "d" } [ 00 >>theta apply-speed ] } 
     { T{ key-down f f "f" } [ [ 1.1 * ] change-multiplier drop ] }
     { T{ key-down f f "r" } [ [ 0.9 * ] change-multiplier drop ] }
-    { T{ key-down f f "p" } [ current-robotino>> [ ] curry \ no-op call-listener ] }
+    { T{ key-down f f "p" } [ [ robotino-push ] curry dup last call-listener ] }
     } set-gestures
 
 
