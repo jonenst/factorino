@@ -42,11 +42,7 @@ ROBOTINO-WORD: omnidrive OmniDrive
 ROBOTINO-WORD: sensors DistanceSensor
 M: array sensors-destroy* [ sensors-destroy* ] each ;
 
-
 : num-distance-sensors ( -- n ) numDistanceSensors ; 
-
-
-
 
 M: integer com-connect* Com_connect throw-when-false ; 
 M: integer com-disconnect* Com_disconnect throw-when-false ; 
@@ -96,9 +92,13 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : sensors-values ( robotino -- values ) sensors-id>> [ dup [ DistanceSensor_voltage ] when ] map ;
 : sensors-headings ( robotino -- values ) sensors-id>> [ dup [ DistanceSensor_heading ] when ] map ;
 
-: surrounding-values ( calibration-table value -- keys )
-    [ values dup rest zip ] [ [ swap first2 between? ] curry ] bi* find nip ;
-: values>keys ( calibration-table keys -- distances )
+: surrounding-values ( calibration-table value -- values )
+    {
+        { [ 2dup [ values first ] dip > ] [ drop values 2 head ] }
+        { [ 2dup [ values last ] dip < ] [ drop values 2 tail* ] }
+        [ [ values dup rest zip ] [ [ swap first2 between? ] curry ] bi* find nip ]
+    } cond ;
+: values>keys ( calibration-table values -- distances )
     [ swap value-at ] with map ;
 : calc-barycentre ( a b c -- x )
     rot [ - ] curry bi@ swap / ;
@@ -109,6 +109,9 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     calibration-table surrounding-values values>keys :> surrounding-keys
     surrounding-values first2 value calc-barycentre :> x
     surrounding-keys first2 x barycentre ;
+: sensors-distances ( robotino -- distances )
+    [ calibration-table>> ] [ sensors-values ] bi
+    over [ [ value>distance ] with map ] [ 2drop f ] if ;
 
 : odometry-construct ( robotino -- ) 
     Odometry_construct >>odometry-id 
@@ -182,6 +185,6 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 
 : <button-robotino> ( -- robotino )
     <init-robotino> dup kill-window ;
-
+CONSTANT: merge-factor 0.3
 : (merge-vectors) ( to-position previous-dir -- result )
-    [ [ 0.3 barycentre ] 2map ] when* ;
+    [ [ merge-factor barycentre ] 2map ] when* ;

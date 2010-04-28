@@ -27,8 +27,6 @@ IN: factorino.driving
     [ [ FREE ] 2dip set-state ] curry each ;
 : is-on? ( robotino cell -- ? )
     [ odometry-xy {x,y}>{i,j} ] dip = ;
-: go-back-when-obstacle ( robotino cell-path obstacle -- )
-    over index swap nth drive-to drop ; 
 : go-end ( robotino cell-path -- )
     [ drop ] [ last drive-to drop ] if-empty ;
 ! TODO GO back the whole way if we have to !
@@ -42,13 +40,13 @@ IN: factorino.driving
     robotino odometry-xy position
     [ {x,y}>{i,j} ] bi@
     over :> current-position
-    [ dup "I'm at : " write . ] [ dup "Going to " write . ] bi*
+    ! [ dup "I'm at : " write . ] [ dup "Going to " write . ] bi*
     the-map <my-astar>
-    "COUCOU" write yield
+    ! "COUCOU" write yield
     find-path :> cell-path
-    cell-path "cell path is : " write .
+    ! cell-path "cell path is : " write .
     ! TODO: the next line forces to use a map-gadget map.
-    the-map "Map is : " write map>> .
+    ! the-map "Map is : " write map>> .
     yield
     ! TODO: the next line forces to use a map-gadget map.
     the-map cell-path update-current-path
@@ -60,7 +58,7 @@ IN: factorino.driving
         free-cells the-map mark-free
         obstacle [
             free-cells robotino obstacle ?go-back
-            obstacle "adding obstacle @" write . yield
+           ! obstacle "adding obstacle @" write . yield
             obstacle the-map t set-obstacle 
             robotino position the-map (go-to)
         ] [ t ] if ] if

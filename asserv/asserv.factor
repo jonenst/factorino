@@ -2,7 +2,7 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays calendar combinators.short-circuit
 factorino.basics io kernel math math.order math.vectors
-prettyprint threads sequences locals math.functions ;
+prettyprint threads sequences locals math.functions tools.time ;
 IN: factorino.asserv
 
 
@@ -17,7 +17,24 @@ CONSTANT: MAXIMUM-SPEED 300 ! mm/sec ??
 CONSTANT: MAXIMUM-ROTATION 80 ! mm/sec ??
 CONSTANT: XY-THRESHOLD 10 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
-CONSTANT: OBSTACLE_THRESHOLD 1.3
+CONSTANT: OBSTACLE_THRESHOLD 1.0
+CONSTANT: MOVING-THRESHOLD 1e-9
+: wait-few-updates ( robotino -- )
+    yield
+    [ com-wait-for-update* ] curry 3 swap times ;
+: moving? ( robotino -- ? )
+    [ 
+        [ odometry-xy ]
+        ! 100 milliseconds sleep
+        [ wait-few-updates ]
+        [ odometry-xy ] tri
+    ] benchmark
+    dup "time was : " write . yield
+    [ v- norm ] dip / 
+    dup "observed velocity is " write 9 10^ * 
+    . "---" print 
+    ! drop f ;
+    MOVING-THRESHOLD > ;
 
 : to-position-speed ( norm -- speed )
     SPEED-MULTIPLIER * 0 MAXIMUM-SPEED clamp ;
@@ -121,10 +138,12 @@ DEFER: drive-position
     ] [
         drive-position
     ] if ;
-
+: block-condition ( robotino current-dir -- ? )
+    ! { [ against-obstacle? ] [ drop moving? not ] } 2|| ; 
+    against-obstacle? ;
 :: (drive-position) ( stop? robotino position quot -- blocking-pos/f )
     robotino position go-position :> current-dir
-    robotino current-dir against-obstacle? [
+    robotino current-dir block-condition [
         robotino stop position
     ] [
         robotino com-wait-for-update*
