@@ -198,7 +198,10 @@ PRIVATE>
 : drive-from-here ( robotino destination -- blocking-pos/f )
     from-robotino-base drive-to ;
 ! All relative destinations
-: drive-from-here* ( robotino destination -- blocking-pos/f )
+GENERIC: drive-from-here* ( robotino destination -- blocking-pos/f )
+M: position drive-from-here* drive-from-here ;
+M: 2d-point drive-from-here* drive-from-here ;
+M: array drive-from-here*
     [ drop f ]
-    [ unclip pick swap drive-from-here [ 2nip ] [ drive-from-here ] if* ] if-empty ;
+    [ unclip pick swap drive-from-here* [ 2nip ] [ drive-from-here ] if* ] if-empty ;
 
