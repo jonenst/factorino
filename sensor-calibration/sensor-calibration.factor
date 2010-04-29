@@ -1,10 +1,10 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors assocs calendar combinators factorino.asserv factorino.basics
-factorino.wall-follower io kernel math math.ranges math.vectors
-prettyprint sequences threads math.functions math.constants 
-random fry ;
-FROM: factorino.asserv => stop ;
+USING: accessors assocs calendar combinators factorino.asserv
+factorino.asserv.private factorino.basics factorino.types
+factorino.utils factorino.wall-follower fry io kernel math
+math.constants math.functions math.ranges math.vectors
+prettyprint random sequences threads ;
 IN: factorino.sensor-calibration
 
 CONSTANT: WALL-FOUND 0.5
@@ -37,7 +37,7 @@ CONSTANT: FACE-THRESHOLD 3
         [ [ { 0 0 } ] dip omnidrive-set-velocity ]
         [ drop 50 milliseconds sleep face-flat-wall ] 2bi
     ] [
-        drop stop 
+        drop stop-robotino
     ] if ;
 
 
@@ -93,14 +93,14 @@ CONSTANT: FACE-THRESHOLD 3
 : find-flat-wall ( robotino -- )
     [ SPEED go-towards-wall ]
     [ dup found-wall? [ 
-        dup flat-wall? [ stop ] [ [ go-away ] [ find-flat-wall ] bi ] if
+        dup flat-wall? [ stop-robotino ] [ [ go-away ] [ find-flat-wall ] bi ] if
     ] [
         dup wait-few-updates find-flat-wall 
     ] if ] bi ;
 
 : touch-wall ( robotino -- )
     [ APPROACH-SPEED go-towards-wall ]
-    [ [ dup moving? ] loop stop  ] bi ;
+    [ [ dup moving? ] loop stop-robotino ] bi ;
 
 : measure-distances ( wall-sensor robotino -- calibration-table )
     2dup sensor-direction vneg 400 20 line

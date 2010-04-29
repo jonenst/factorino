@@ -96,10 +96,10 @@ HELP: drive-origin
 
 HELP: drive-to
 { $values
-    { "robotino" robotino } { "destination" "a destination" }
-    { "blocking-position/f" "a position or " { $instance f } }
+    { "robotino" robotino } { "destination" "a " { $link "destination" } }
+    { "blocking-position/f" { $or position 2d-point f } }
 }
-{ $description "Drives to the destination in a absolute base. This word blocks until destination is reached. If an obstacle is reached on the way, outputs the current destination." } ;
+{ $description "Drives to the destination in a absolute base (which can be reset with " { $link odometry-reset } "). This word blocks until destination is reached ( using" { $link at-position? } ") . If an obstacle is reached on the way, outputs the current destination." } ;
 
 HELP: from-robotino-base
 { $values
@@ -134,8 +134,7 @@ HELP: wait-few-updates
 { $description "blocks until a few updates of the robotino sensors have been done." } ;
 
 ARTICLE: "factorino.asserv" "factorino.asserv"
-"The " { $vocab-link "factorino.asserv" } " vocabulary provides simple control words to move the robotino to a destination."
-"A destination is either a " { $instance 2d-point } ", a " { $instance position } " tuple or an array of destinations."
+"The " { $vocab-link "factorino.asserv" } " vocabulary provides simple control words to move the robotino to a destination. Most words will stop if the robotino sees an obstacle."
 { $subsections
     drive-to
     drive-from-here

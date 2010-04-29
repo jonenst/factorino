@@ -104,7 +104,7 @@ CONSTANT: MOVING-THRESHOLD 1e-9
     ! [ drop low-speed? ]
     } 2&& ;
 
-: stop ( robotino -- ) [ { 0 0 } 0 omnidrive-set-velocity ] [ f >>initial-angle drop ] bi ;
+: stop-robotino ( robotino -- ) [ { 0 0 } 0 omnidrive-set-velocity ] [ f >>initial-angle drop ] bi ;
 
 : print-position ( robotino -- robotino )
     [ [ odometry-xy ] [ odometry-phi ] bi "Position : " . . . ] keep ;
@@ -139,7 +139,7 @@ CONSTANT: FRONT-RANGE 45
 DEFER: drive-position
 : continue-driving ( stop? robotino position -- blocking-pos/f )
     2dup at-position? [
-        drop swap [ stop ] [ drop ] if f yield
+        drop swap [ stop-robotino ] [ drop ] if f yield
     ] [
         drive-position
     ] if ;
@@ -149,7 +149,7 @@ DEFER: drive-position
 :: (drive-position) ( stop? robotino position quot -- blocking-pos/f )
     robotino position go-position :> current-dir
     robotino current-dir block-condition [
-        robotino stop position
+        robotino stop-robotino position
     ] [
         robotino com-wait-for-update*
         ! WTF, com-wait-for-update* is blocking !! 
@@ -164,14 +164,14 @@ DEFER: drive-position
 
 GENERIC: drive-to* ( stop? robotino destination -- blocking-position/f )
 : drive-path ( stop? robotino path -- blocking-position/f )
-    [ swap [ stop ] [ drop ] if f ]
+    [ swap [ stop-robotino ] [ drop ] if f ]
     [ unclip pick swap [ f ] 2dip drive-to* [ [ 3drop ] dip ] [ drive-path ] if* ]
     if-empty ;
 PRIVATE> 
 : rotate-to ( robotino phi -- )
     [ fix-angle (to-position-omega) ]
     [ drop swap [ { 0 0 } ] dip omnidrive-set-velocity ]
-    [ 2dup (theta-at-position?) [ drop stop ] [ rotate-to ] if ] 2tri ;
+    [ 2dup (theta-at-position?) [ drop stop-robotino ] [ rotate-to ] if ] 2tri ;
 : rotate-from-here ( robotino phi -- )
     dupd [ odometry-phi ] dip + rotate-to ;
 <PRIVATE
