@@ -1,6 +1,7 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: help.markup help.syntax kernel factorino.types ;
+USING: help.markup help.syntax kernel factorino.types factorino.basics
+factorino.asserv.private ;
 IN: factorino.asserv
 
 HELP: MAXIMUM-ROTATION
@@ -75,22 +76,22 @@ HELP: XY-THRESHOLD
 
 HELP: drive-from-here
 { $values
-    { "robotino" robotino } { "destination" "a destination" }
-    { "blocking-pos/f" "a position" }
+    { "robotino" robotino } { "destination" { $link "destination" } }
+    { "blocking-pos/f" { $or position 2d-point f } }
 }
-{ $description "blocks until destination is reached. Destination is specified in the base relative to the robotino." } ;
+{ $description "Variant of " { $link drive-to } " that interprets all destinations in the base of the robotino at the time of the calling of this word. Compare with " { $link drive-from-here* } ". " } ;
 
 HELP: drive-from-here*
 { $values
-    { "robotino" robotino } { "destination" "a destination" }
-    { "blocking-pos/f" "a destination or " { $instance f } }
+    { "robotino" robotino } { "destination" { $link "destination" } }
+    { "blocking-pos/f" { $or position 2d-point f } }
 }
-{ $description "Blocks until destination is reached. If destination is an array of destinations, use a new relative base at the time the destination is considered." } ;
+{ $description "Variant of " { $link drive-from-here } " that uses the base at the time of the recursive calling of this word on " { $link position } " or " { $link 2d-point } " when destination is a sequence." } ;
 
 HELP: drive-origin
 { $values
     { "robotino" robotino }
-    { "blocking-position/f" "a destination or " { $instance f } }
+    { "blocking-position/f" { $or position 2d-point f } }
 }
 { $description "drives back home." } ;
 
@@ -99,11 +100,19 @@ HELP: drive-to
     { "robotino" robotino } { "destination" "a " { $link "destination" } }
     { "blocking-position/f" { $or position 2d-point f } }
 }
-{ $description "Drives to the destination in a absolute base (which can be reset with " { $link odometry-reset } "). This word blocks until destination is reached ( using" { $link at-position? } ") . If an obstacle is reached on the way, outputs the current destination." } ;
+{ $description "Drives to the destination in a absolute base (which can be reset with " { $link odometry-reset } "). This word blocks until destination is reached (using " { $link at-position? } "). Depending on the type of destination, the robot behaves differently."
+
+{ $list 
+{ "For a " { $link 2d-point } ", the robot turns in the direction of the destination, then drives in a straight line until the destination is reached." }
+{ "For a " { $link position } ", the robot drives in a straight line while rotating and stops when the position and the angle are reached." } 
+{ "For a " { $link sequence } ", the robot recursively drives to each position in the sequence." } } 
+
+
+"If the robotino sees an obstacle on the way, outputs the current destination." } ;
 
 HELP: from-robotino-base
 { $values
-    { "robotino" robotino } { "destination" "a destination" }
+    { "robotino" robotino } { "destination" { $link "destination" } }
     { "robotino" robotino } { "new-destinations" "a destination" }
 }
 { $description "changes the base destination to the current base." } ;
@@ -113,25 +122,25 @@ HELP: moving?
     { "robotino" robotino }
     { "?" boolean }
 }
-{ $description "Tests if the robotino is moving. See MOVING-THRESHOLD." } ;
+{ $description "Tests if the robotino is moving. See " { $link MOVING-THRESHOLD } ". This word can take longer than you think to execute.." } ;
 
 HELP: rotate-from-here
 { $values
-    { "robotino" robotino } { "phi" null }
+    { "robotino" robotino } { "phi" real }
 }
-{ $description "Rotates the robot from the current angle. No checks are performed compared to drive-from-here." } ;
+{ $description "Rotates the robot from the current angle. Does not check for obstacles. See also " { $link rotate-to } "." } ;
 
 HELP: rotate-to
 { $values
-    { "robotino" robotino } { "phi" null }
+    { "robotino" robotino } { "phi" real }
 }
-{ $description "Rotates the robot to an absolute angle." } ;
+{ $description "Rotates the robot to an absolute angle. Does not check for obstacles. See also " { $link rotate-from-here } "." } ;
 
 HELP: wait-few-updates
 { $values
     { "robotino" robotino }
 }
-{ $description "blocks until a few updates of the robotino sensors have been done." } ;
+{ $description "Blocks until a few updates of the robotino sensors have been done." } ;
 
 ARTICLE: "factorino.asserv" "factorino.asserv"
 "The " { $vocab-link "factorino.asserv" } " vocabulary provides simple control words to move the robotino to a destination. Most words will stop if the robotino sees an obstacle."

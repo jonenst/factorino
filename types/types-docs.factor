@@ -1,6 +1,6 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: help.markup help.syntax kernel ;
+USING: help.markup help.syntax kernel math factorino.bindings ;
 IN: factorino.types
 
 HELP: 2d-point
@@ -28,7 +28,7 @@ HELP: throw-when-false
 }
 { $description "Throws an exception if the return code from the library is FALSE" } ;
 ARTICLE: "destination" "destination"
-"A destination is either a " { $instance 2d-point } ", a " { $instance position } " tuple or an array of destinations."
+"A destination is a recursive structure. It is either " { $instance 2d-point } ", " { $instance position } " or a sequence of destinations."
 ;
 ARTICLE: "factorino.types" "factorino.types"
 "The " { $vocab-link "factorino.types" } " vocabulary regroups the different types used in all factorino vocabularies. Here are the most important types:"

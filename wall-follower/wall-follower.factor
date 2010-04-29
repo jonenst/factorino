@@ -1,9 +1,9 @@
 ! Copyright (C) 2010 Your name.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors calendar combinators combinators.short-circuit
-factorino.basics factorino.types inverse io kernel math
-math.constants math.vectors memoize prettyprint sequences
-threads ;
+factorino.basics factorino.types factorino.utils inverse io
+kernel math math.constants math.vectors memoize prettyprint
+sequences threads ;
 IN: factorino.wall-follower
 
 CONSTANT:  SLOW_VELOCITY 200 ! mm/s
@@ -159,7 +159,7 @@ MEMO: escape-vectors  ( robotino -- vectors ) sensors-headings [ { 1 0 } swap to
     VELOCITY >>velocity
     [ [ calc-speed ] [ speedup ] [ apply-new-velocity ] tri ] keep 
     50 milliseconds sleep drive ;
-        
+
 : follow-test ( address -- )
     wall-follower new-robotino
     { 1 0 } >>current-dir 0 >>rot-velocity 
