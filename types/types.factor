@@ -1,6 +1,7 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: factorino.bindings kernel models math ;
+USING: factorino.bindings kernel models math arrays sequences 
+combinators.short-circuit ;
 IN: factorino.types
 
 TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id camera-id 
@@ -18,7 +19,7 @@ TUPLE: position {x,y} phi ;
 PRIVATE>
 : <position> ( {x,y} phi -- position )
     dup [ fix-angle ] when position boa ;
-PREDICATE: 2d-point < array { 
+PREDICATE: 2d-point < sequence { 
         [ length 2 = ] 
         [ [ real? ] all? ]
     } 1&& ;
