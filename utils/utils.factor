@@ -14,4 +14,6 @@ IN: factorino.utils
 
 : barycentre ( a b x -- c )
     [ [ swap - ] dip * ] [ 2drop ] 3bi + ;
+: calc-barycentre ( a b c -- x )
+    rot [ - ] curry bi@ swap / ;
 

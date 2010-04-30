@@ -16,8 +16,6 @@ IN: factorino.basics
     } cond ;
 : values>keys ( calibration-table values -- distances )
     [ swap value-at ] with map ;
-: calc-barycentre ( a b c -- x )
-    rot [ - ] curry bi@ swap / ;
 PRIVATE>
 GENERIC: com-destroy* ( identifier -- )
 GENERIC: com-set-address* ( address identifier -- )
@@ -141,8 +139,8 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     [ [ refresh-position ] curry 200 milliseconds every ]
     [ (>>position-refresh-alarm) ] tri ;
 : <init-robotino> ( -- robotino )
-!    "172.26.201.1"
-  "137.194.64.6:8080"
+    "172.26.201.1"
+!  "137.194.64.6:8080"
 !  "137.194.10.31:8080"
 !  "127.0.0.1:8080"
    <robotino> 

@@ -1,6 +1,6 @@
 ! Copyright (C) 2010 Jon Harper. 
 ! See http://factorcode.org/license.txt for BSD license.
-USING: tools.test factorino.basics math math.constants math.vectors ;
+USING: tools.test factorino.basics math math.constants math.vectors factorino.utils ;
 IN: factorino.basics.tests
 
 
@@ -15,4 +15,3 @@ IN: factorino.basics.tests
 
 [ t ] [ { 1 0 } pi 2 / rotate { 0 1 } 0.0001 v~ ] unit-test
 
-[ { 3.0 6.0 } ] [ { 0 0 } { 10 20 } (merge-vectors) ] unit-test

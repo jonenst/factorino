@@ -1,7 +1,7 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: help.markup help.syntax kernel factorino.types factorino.basics
-factorino.asserv.private ;
+USING: factorino.asserv.private factorino.basics
+factorino.types help.markup help.syntax kernel math sequences ;
 IN: factorino.asserv
 
 HELP: MAXIMUM-ROTATION
