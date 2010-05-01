@@ -4,8 +4,8 @@ USING: combinators.short-circuit factorino.utils io destructors
 io.encodings.ascii io.sockets kernel locals math math.functions
 math.parser sequences splitting calendar io.timeouts namespaces 
 continuations ;
+FROM: factorino.basics => com-address* ;
 IN: factorino.imu
-CONSTANT: adress "172.26.201.1"
 CONSTANT: port 54321
 
 :: quaternion>yaw ( q0 q1 q2 q3 -- yaw )
@@ -23,13 +23,23 @@ CONSTANT: port 54321
 : receive-parsed ( datagram -- parsed )
     dup receive drop parse-line [ nip ] [ receive-parsed
     ] if* ;
-: (get-line) ( datagram -- result )
+: (get-line) ( address datagram -- result )
     [
-        [ 100 milliseconds swap set-timeout ]
-        [ adress port <inet4> swap initiate ]
+        [ 200 milliseconds swap set-timeout ]
+        [ [ port <inet4> ] dip initiate ]
         [ [ receive-parsed first4 quaternion>yaw ] with-timeout ] tri
     ] with-disposal ;
-: get-line ( -- result )
-    f port <inet4> <datagram> [ (get-line) ] curry [ drop f ] recover ;
-: imu-angle ( -- angle )
+: get-line ( address -- result )
+    f port <inet4> <datagram> [ (get-line) ] 2curry [ drop f ] recover ;
+: imu-angle ( adress -- angle )
     get-line dup [ to-degrees ] when ; 
+: imu-phi ( robotino -- angle? )
+    com-address* imu-angle ; 
+: imu-phi* ( robotino -- angle )
+    dup imu-phi [ nip ] [ imu-phi* ] if* ;
+
+: imu-temp ( -- )
+f [ drop readln dup . parse-line dup not ] loop first4 quaternion>yaw to-degrees . yield ;
+
+: imu-lol ( -- )
+"/dev/ttyACM0" utf8 [ 100 [ imu-temp ] times ] with-file-reader ;

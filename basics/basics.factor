@@ -3,8 +3,8 @@
 USING: accessors alarms assocs arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors models
-namespaces prettyprint sequences system threads
-factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadgets.buttons ;
+namespaces prettyprint sequences system threads factorino.imu
+factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadgets.buttons strings ;
 IN: factorino.basics
 <PRIVATE
 
@@ -44,7 +44,7 @@ M: integer com-destroy* Com_destroy throw-when-false ;
 M: integer com-wait-for-update* Com_waitForUpdate throw-when-false ;
 M: integer com-address* 
     256 dup <byte-array>
-    [ swap Com_address throw-when-false ] keep ;
+    [ swap Com_address throw-when-false ] keep [ 0 = not ] filter >string ;
 M: integer com-set-address* swap Com_setAddress throw-when-false ;
 
 : omnidrive-construct ( robotino -- ) 
@@ -103,7 +103,9 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : odometry-x ( robotino -- x ) odometry-id>> Odometry_x ;
 : odometry-y ( robotino -- y ) odometry-id>> Odometry_y ;
 : odometry-xy ( robotino -- {x,y} ) [ odometry-x ] [ odometry-y ] bi 2array ;
-: odometry-phi ( robotino -- phi ) odometry-id>> Odometry_phi ;
+: odometry-phi ( robotino -- phi ) 
+! odometry-id>> Odometry_phi ;
+imu-phi* ;
 : odometry-position ( robotino -- position ) [ odometry-xy ] [ odometry-phi ] bi <position> ;
 : odometry-set ( robotino {x,y,phi} -- ) [ odometry-id>> ] [ first3 ] bi* Odometry_set throw-when-false ;
 : odometry-reset ( robotino -- ) { 0 0 0 } odometry-set ;

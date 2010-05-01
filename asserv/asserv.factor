@@ -2,7 +2,7 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays calendar combinators.short-circuit
 factorino.basics factorino.types factorino.utils io kernel math math.order math.vectors
-prettyprint threads sequences locals math.functions tools.time ;
+prettyprint threads sequences locals math.functions tools.time factorino.imu ;
 FROM: factorino.types.private => fix-angle ;
 IN: factorino.asserv
 
@@ -15,7 +15,7 @@ CONSTANT: merge-factor 0.3
     [ - ] [ swap - ] 2bi [ 360 rem ] bi@ min ;
 PRIVATE>
 CONSTANT: SPEED-MULTIPLIER 8
-CONSTANT: OMEGA-MULTIPLIER 3
+CONSTANT: OMEGA-MULTIPLIER 10
 CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
 CONSTANT: STOP-SPEED 20 ! mm/sec ??
 CONSTANT: MAXIMUM-SPEED 300 ! mm/sec ??
@@ -91,7 +91,8 @@ CONSTANT: MOVING-THRESHOLD 1e-9
     ] if ;
 : (theta-at-position?) ( robotino phi -- ? )
     dup [ 
-        [ odometry-phi ] [ ] bi* angular-distance PHI-THRESHOLD <
+        [ odometry-phi ] [ ] bi* 
+        angular-distance PHI-THRESHOLD <
     ] [
         2drop t
     ] if ;
@@ -173,7 +174,7 @@ PRIVATE>
     [ drop swap [ { 0 0 } ] dip omnidrive-set-velocity ]
     [ 2dup (theta-at-position?) [ drop stop-robotino ] [ rotate-to ] if ] 2tri ;
 : rotate-from-here ( robotino phi -- )
-    dupd [ odometry-phi ] dip + rotate-to ;
+    dupd [ odometry-phi debug ] dip + debug rotate-to ;
 <PRIVATE
 : face-initial-angle ( robotino -- )
     dup initial-angle>> rotate-to ;

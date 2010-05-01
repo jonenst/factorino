@@ -2,14 +2,13 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors alarms arrays calendar colors combinators
 delegate factorino.maps.display.common factorino.maps.general
-io kernel math math.functions math.rectangles math.vectors models
+kernel math math.functions math.rectangles math.vectors models
 namespaces opengl prettyprint sequences ui ui.gadgets
-ui.gestures ui.render ui.tools.listener threads 
+ui.gestures ui.render threads 
 factorino.types factorino.driving.utils ;
 IN: factorino.maps.display
 
 <PRIVATE
-: debug ( object -- object ) dup get-listener listener-streams [ . ] with-streams* ;
 : mouse-pos ( gadget -- {i,j} ) dup hand-rel screen>map ;
 
 : full-screen-zoom ( gadget -- zoom ) 

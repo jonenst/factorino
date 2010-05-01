@@ -1,6 +1,6 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: math arrays kernel math.constants sequences math.functions locals ;
+USING: math arrays kernel math.constants sequences math.functions locals ui.tools.listener prettyprint io ;
 IN: factorino.utils
 
 : to-degrees ( radian -- degrees ) 180 * pi / ;
@@ -17,3 +17,4 @@ IN: factorino.utils
 : calc-barycentre ( a b c -- x )
     rot [ - ] curry bi@ swap / ;
 
+: debug ( object -- object ) dup get-listener listener-streams [ . ] with-streams* ;
