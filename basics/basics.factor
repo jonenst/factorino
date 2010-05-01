@@ -4,9 +4,12 @@ USING: accessors alarms assocs arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads factorino.imu
-factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadgets.buttons strings ;
+factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadgets.buttons strings 
+io.encodings.ascii fry io.sockets ;
 IN: factorino.basics
 <PRIVATE
+
+
 
 : surrounding-values ( calibration-table value -- values )
     {
@@ -105,7 +108,7 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : odometry-xy ( robotino -- {x,y} ) [ odometry-x ] [ odometry-y ] bi 2array ;
 : odometry-phi ( robotino -- phi ) 
 ! odometry-id>> Odometry_phi ;
-imu-phi* ;
+imu-angle>> ;
 : odometry-position ( robotino -- position ) [ odometry-xy ] [ odometry-phi ] bi <position> ;
 : odometry-set ( robotino {x,y,phi} -- ) [ odometry-id>> ] [ first3 ] bi* Odometry_set throw-when-false ;
 : odometry-reset ( robotino -- ) { 0 0 0 } odometry-set ;
@@ -140,6 +143,15 @@ imu-phi* ;
     [ dup odometry-position \ robotino-position-model new-model >>current-position drop ]
     [ [ refresh-position ] curry 200 milliseconds every ]
     [ (>>position-refresh-alarm) ] tri ;
+
+CONSTANT: imu-port 54321
+: refresh-quotation ( remote encoding robotino -- quot )
+    '[ _ _  [ [ imu-angle _ (>>imu-angle) t ] loop ] with-client ] ; inline
+: init-imu-refresh ( robotino -- )
+    [ com-address* imu-port <inet> ascii ]
+    [ refresh-quotation ]
+    [  [ "imu-thread" spawn ] dip (>>imu-thread) ] tri ;
+    
 : <init-robotino> ( -- robotino )
     "172.26.201.1"
 !  "137.194.64.6:8080"
@@ -152,6 +164,7 @@ imu-phi* ;
         [ init-all-sensors ]
         [ odometry-reset ]
         [ init-position-refresh ]
+        [ init-imu-refresh ] 
         [ ] 
     }
     cleave ;

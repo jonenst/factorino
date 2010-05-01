@@ -7,6 +7,7 @@ IN: factorino.types
 TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id camera-id 
 current-direction initial-angle 
 current-position position-refresh-alarm
+{ imu-angle initial: 0.0 } imu-thread
 calibration-table
 ;
 TUPLE: robotino-position-model < model ;
