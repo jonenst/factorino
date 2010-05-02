@@ -12,7 +12,7 @@ CONSTANT: SPEED 200
 CONSTANT: APPROACH-SPEED 30
 CONSTANT: MEASURE-SPEED 100
 CONSTANT: FACE-THRESHOLD 3 
-: ~ ( a b -- equal? )
+: my~ ( a b -- equal? )
     - abs 0.05 < ;
 : sensor-direction ( i robotino -- dir ) escape-vectors nth ;
 : wall-direction ( robotino -- dir ) [ biggest-sensor ] keep sensor-direction ;
@@ -82,7 +82,7 @@ CONSTANT: FACE-THRESHOLD 3
     [ ]
     [ [ biggest-sensor ] keep sensor-direction pi 2 / rotate 200 20 line ] } cleave
     from-robotino-base
-    [ measure-distances-noface values dup . dup first [ ~ ] curry all? ]
+    [ measure-distances-noface values dup . dup first [ my~ ] curry all? ]
     [ midpoint drive-to drop ] 2bi ;
 : random-orientation ( -- pos )
     { 0 0 } 90 270 [a,b] random <position> ;

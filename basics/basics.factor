@@ -8,9 +8,6 @@ factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadge
 io.encodings.ascii fry io.sockets ;
 IN: factorino.basics
 <PRIVATE
-
-
-
 : surrounding-values ( calibration-table value -- values )
     {
         { [ 2dup [ values first ] dip > ] [ drop values 2 head ] }
@@ -106,11 +103,14 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : odometry-x ( robotino -- x ) odometry-id>> Odometry_x ;
 : odometry-y ( robotino -- y ) odometry-id>> Odometry_y ;
 : odometry-xy ( robotino -- {x,y} ) [ odometry-x ] [ odometry-y ] bi 2array ;
-: odometry-phi ( robotino -- phi ) 
-! odometry-id>> Odometry_phi ;
-imu-angle>> ;
+: odometry-phi ( robotino -- phi ) odometry-id>> Odometry_phi ;
 : odometry-position ( robotino -- position ) [ odometry-xy ] [ odometry-phi ] bi <position> ;
-: odometry-set ( robotino {x,y,phi} -- ) [ odometry-id>> ] [ first3 ] bi* Odometry_set throw-when-false ;
+: filtered-phi ( robotino -- phi ) odometry-phi ;
+: filtered-xy ( robotino -- phi ) odometry-xy ;
+: filtered-position ( robotino -- phi ) [ filtered-xy ] [ filtered-phi ] bi <position> ;
+: (odometry-set) ( robotino x y phi -- ) [ odometry-id>> ] 3dip Odometry_set throw-when-false ;
+: odometry-set ( robotino {x,y,phi} -- ) first3 (odometry-set) ;
+: odometry-set-phi ( robotino phi -- ) [ dup odometry-xy first2 ] dip (odometry-set) ;
 : odometry-reset ( robotino -- ) { 0 0 0 } odometry-set ;
 
 
@@ -145,8 +145,30 @@ imu-angle>> ;
     [ (>>position-refresh-alarm) ] tri ;
 
 CONSTANT: imu-port 54321
+: (merge-imu) ( imu-angle robotino -- )
+    [ odometry-phi 0.99 barycentre ] 
+    [ ! swap odometry-set-phi
+      (>>filtered-phi) 
+    ] bi ;
+: merge-imu ( imu-angle robotino -- )
+    dup current-direction>> {x,y}>> norm 0 1 v~ [ (merge-imu) ] [ 2drop ] if ;
+: update-phi-with-imu ( robotino -- )
+    dup imu-angle>> odometry-set-phi ;
+CONSTANT: IMU-FIFO-LENGTH 15
+: store-imu ( imu-angle robotino -- )
+    nip [ imu-angle>> ] keep [ dup length IMU-FIFO-LENGTH > [ rest ] when swap suffix ] with change-prev-imu-angle drop ;
+: refresh-imu ( imu-angle robotino -- )
+    over [ 
+        [ store-imu ] [ (>>imu-angle) ] [ (merge-imu) ] 2tri 
+    ] [
+        2drop
+    ] if ;
 : refresh-quotation ( remote encoding robotino -- quot )
-    '[ _ _  [ [ imu-angle _ (>>imu-angle) t ] loop ] with-client ] ; inline
+    '[ _ _  [ [
+                imu-angle _ refresh-imu t 
+            ] loop
+        ] with-client
+    ] ; inline
 : init-imu-refresh ( robotino -- )
     [ com-address* imu-port <inet> ascii ]
     [ refresh-quotation ]

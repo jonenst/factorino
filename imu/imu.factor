@@ -13,14 +13,15 @@ IN: factorino.imu
 : check-parsed ( parsed -- ? )
     { [ length 14 = ] [ [ ] all? ] } 1&& ;
 : parse-line ( line -- parsed/f )
-    dup last CHAR: \n = [ 1 head* ] when
     "," split [ string>number ] map
     dup check-parsed [ drop f ] unless ;
+: imu-angle ( -- angle )
+    readln parse-line dup [ first4 quaternion>yaw to-degrees ] when ;
+! Watch out, this can loop indefinitly !! Be sure that the card is plugged
+! and that readln will get a result
 : receive-parsed ( -- parsed )
     readln parse-line [ receive-parsed
     ] unless* ;
-: imu-angle ( -- angle )
-    receive-parsed first4 quaternion>yaw to-degrees ;
 
 : imu-temp ( -- )
 f [ drop readln dup . parse-line dup not ] loop first4 quaternion>yaw to-degrees . yield ;

@@ -19,7 +19,8 @@ CONSTANT: OMEGA-MULTIPLIER 10
 CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
 CONSTANT: STOP-SPEED 20 ! mm/sec ??
 CONSTANT: MAXIMUM-SPEED 300 ! mm/sec ??
-CONSTANT: MAXIMUM-ROTATION 80 ! mm/sec ??
+CONSTANT: MAXIMUM-ROTATION 20 ! mm/sec ??
+CONSTANT: MINIMUM-ROTATION 5 ! mm/sec ??
 CONSTANT: XY-THRESHOLD 10 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
 CONSTANT: OBSTACLE_THRESHOLD 1.0
@@ -29,10 +30,10 @@ CONSTANT: MOVING-THRESHOLD 1e-9
     [ com-wait-for-update* ] curry 3 swap times ;
 : moving? ( robotino -- ? )
     [ 
-        [ odometry-xy ]
+        [ filtered-xy ]
         ! 100 milliseconds sleep
         [ wait-few-updates ]
-        [ odometry-xy ] tri
+        [ filtered-xy ] tri
     ] benchmark
     dup "time was : " write . yield
     [ v- norm ] dip / 
@@ -46,8 +47,8 @@ CONSTANT: MOVING-THRESHOLD 1e-9
 
 : to-position-vector ( robotino position -- vector )
     swap
-    [ [ {x,y}>> ] [ odometry-xy ] bi* v- ]
-    [ nip odometry-phi neg ] 2bi
+    [ [ {x,y}>> ] [ filtered-xy ] bi* v- ]
+    [ nip filtered-phi neg ] 2bi
     rotate-degrees ;
 
 : to-position-speed-vector ( robotino position -- speed-vector )
@@ -56,17 +57,19 @@ CONSTANT: MOVING-THRESHOLD 1e-9
     [ drop current-direction>> {x,y}>> ] 2bi (merge-vectors) ;
 
 : fit-to-range ( omega -- omega )
-    MAXIMUM-ROTATION [ neg ] keep clamp ;
+    [ abs MINIMUM-ROTATION MAXIMUM-ROTATION clamp ] keep sgn * ;
 : adjust-current ( goal current -- goal current )
     2dup > [ 360 + ] [ 360 - ] if ;
 : chose-side ( goal current -- omega )
     2dup - abs 180 > [ 
     adjust-current
     ] when - ;
-: (to-position-omega) ( robotino phi -- omega )
-    [ odometry-phi ] [ ] bi* 
+: ((to-position-omega)) ( current destination -- omega )
+    2dup [ "at : " write . ] [ "going to : " write . ] bi*
     swap chose-side OMEGA-MULTIPLIER * 
     fit-to-range ;
+: (to-position-omega) ( robotino phi -- omega )
+    [ filtered-phi ] [ ] bi* ((to-position-omega)) ;
 
 : to-position-omega ( robotino position -- omega )
     dup phi>> [
@@ -85,19 +88,28 @@ CONSTANT: MOVING-THRESHOLD 1e-9
 
 : xy-at-position? ( robotino position -- ? ) 
     dup {x,y}>> [ 
-        [ odometry-xy ] [ {x,y}>> ] bi* v- norm XY-THRESHOLD <
+        [ filtered-xy ] [ {x,y}>> ] bi* v- norm XY-THRESHOLD <
     ] [ 
         2drop t 
     ] if ;
-: (theta-at-position?) ( robotino phi -- ? )
-    dup [ 
-        [ odometry-phi ] [ ] bi* 
+: ((theta-at-position?)) ( phi theta -- ? )
+    2dup [ "at : " write . ] [ "going to : " write . ] bi*
+    swap dup [  
         angular-distance PHI-THRESHOLD <
     ] [
         2drop t
     ] if ;
+
+: (theta-at-position?) ( robotino phi -- ? )
+    [ filtered-phi ] dip ((theta-at-position?)) ;
 : theta-at-position? ( robotino position -- ? )
     phi>> (theta-at-position?) ;
+: imu-stable ( robotino -- ? )
+    [ imu-angle>> ] [ prev-imu-angle>> ] bi dup .
+    [ 0.5 ~ ] with all? 
+    dup [ "imu unstable !!" print ] unless 
+    yield 
+    ;
 : low-speed? ( robotino -- ? )
     current-direction>> [ {x,y}>> norm STOP-SPEED < ] [ t ] if* ;
 : at-position? ( robotino position -- ? )
@@ -108,7 +120,7 @@ CONSTANT: MOVING-THRESHOLD 1e-9
 : stop-robotino ( robotino -- ) [ { 0 0 } 0 omnidrive-set-velocity ] [ f >>initial-angle drop ] bi ;
 
 : print-position ( robotino -- robotino )
-    [ [ odometry-xy ] [ odometry-phi ] bi "Position : " . . . ] keep ;
+    [ [ filtered-xy ] [ filtered-phi ] bi "Position : " . . . ] keep ;
 :: >padding ( direction -- padding ) 
     direction norm :> r
     r zero? [ f ] [
@@ -120,7 +132,7 @@ CONSTANT: MOVING-THRESHOLD 1e-9
         ] if
     ] if ;
 : calc-initial-angle ( robotino position -- angle )
-    swap odometry-xy v- >padding ;
+    swap filtered-xy v- >padding ;
 : assign-initial-angle ( robotino position -- )
     dupd calc-initial-angle >>initial-angle drop ;
 CONSTANT: FRONT-RANGE 45
@@ -169,12 +181,17 @@ GENERIC: drive-to* ( stop? robotino destination -- blocking-position/f )
     [ unclip pick swap [ f ] 2dip drive-to* [ [ 3drop ] dip ] [ drive-path ] if* ]
     if-empty ;
 PRIVATE> 
+: (rotate-to) ( robotino phi -- )
+    "rotate-to" print yield
+    [ [ imu-angle>> ] [ fix-angle ] bi* ((to-position-omega)) ]
+    [ drop swap [ { 0 0 } ] dip yield omnidrive-set-velocity ]
+    [ 2dup { [ [ imu-angle>> ] dip ((theta-at-position?)) ] [ drop imu-stable ] } 2&&
+        [ drop stop-robotino ] [ (rotate-to) ] if
+    ] 2tri ;
 : rotate-to ( robotino phi -- )
-    [ fix-angle (to-position-omega) ]
-    [ drop swap [ { 0 0 } ] dip omnidrive-set-velocity ]
-    [ 2dup (theta-at-position?) [ drop stop-robotino ] [ rotate-to ] if ] 2tri ;
+    [ (rotate-to) ] [ drop update-phi-with-imu ] 2bi ;
 : rotate-from-here ( robotino phi -- )
-    dupd [ odometry-phi debug ] dip + debug rotate-to ;
+    [ dup imu-angle>> ] dip + rotate-to ;
 <PRIVATE
 : face-initial-angle ( robotino -- )
     dup initial-angle>> rotate-to ;
