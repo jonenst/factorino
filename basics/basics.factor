@@ -5,7 +5,8 @@ combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads factorino.imu
 factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadgets.buttons strings 
-io.encodings.ascii fry io.sockets ;
+io.encodings.ascii fry io.sockets continuations 
+io.binary factorino.camera ;
 IN: factorino.basics
 <PRIVATE
 : surrounding-values ( calibration-table value -- values )
@@ -33,6 +34,7 @@ CONSULT: com-protocol robotino com-id>> ;
 
 ROBOTINO-WORD: bumper Bumper
 ROBOTINO-WORD: omnidrive OmniDrive
+ROBOTINO-WORD: camera Camera
 ROBOTINO-WORD: sensors DistanceSensor
 M: array sensors-destroy* [ sensors-destroy* ] each ;
 
@@ -113,7 +115,22 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : odometry-set-phi ( robotino phi -- ) [ dup odometry-xy first2 ] dip (odometry-set) ;
 : odometry-reset ( robotino -- ) { 0 0 0 } odometry-set ;
 
-
+: camera-construct ( robotino -- )
+    Camera_construct >>camera-id
+    [ camera-id>> ] [ com-id>> ] bi Camera_setComId throw-when-false ;
+: camera-set-streaming ( robotino ? -- )
+    [ camera-id>> ] [ TRUE FALSE ? ] bi* Camera_setStreaming throw-when-false ;
+: camera-grab? ( robotino -- ? )
+    camera-id>> Camera_grab TRUE = t f ? ;
+: camera-image-size ( robotino -- dim )
+    camera-id>> 4 <byte-array> dup clone [ Camera_imageSize drop ]
+    2keep [ le> ] bi@ 2array ;
+:: camera-get-image ( robotino -- image dim )
+    robotino [ camera-id>> ] [ camera-grab? drop ] [ camera-image-size ] tri
+    product 3 * dup <byte-array> :> result 
+    result swap
+    4 <byte-array> dup clone [ Camera_getImage throw-when-false ] 2keep [ le> ] bi@ 2array
+    result swap ;
 : new-robotino ( address class -- robotino ) 
     new
     num-distance-sensors f <array> >>sensors-id
@@ -131,6 +148,7 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
         [ sensors-destroy* ]
         [ bumper-destroy* ]
         [ omnidrive-destroy* ]
+        [ camera-destroy* ]
         [ com-destroy* ] 
     } cleave ;
 : kill-button ( robotino -- button )
@@ -163,12 +181,14 @@ CONSTANT: IMU-FIFO-LENGTH 15
     ] [
         2drop
     ] if ;
-: refresh-quotation ( remote encoding robotino -- quot )
+: (refresh-quotation) ( remote encoding robotino -- quot )
     '[ _ _  [ [
                 imu-angle _ refresh-imu t 
             ] loop
         ] with-client
     ] ; inline
+: refresh-quotation ( remote encoding robotino -- quot )
+    [ [ (refresh-quotation) ] [ 2drop 2drop ] recover ] 3curry ; inline
 : init-imu-refresh ( robotino -- )
     [ com-address* imu-port <inet> ascii ]
     [ refresh-quotation ]
