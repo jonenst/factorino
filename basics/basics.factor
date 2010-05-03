@@ -125,13 +125,16 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : camera-image-size ( robotino -- dim )
     camera-id>> 4 <byte-array> dup clone [ Camera_imageSize drop ]
     2keep [ le> ] bi@ 2array ;
+:: (camera-get-image) ( robotino byte-array -- )
+    robotino camera-id>> byte-array dup length
+    4 <byte-array> dup clone Camera_getImage throw-when-false ;
 :: camera-get-image ( robotino -- image/f dim/f )
     robotino camera-grab? [ 
-    robotino [ camera-id>> ] [ camera-image-size ] bi
-    product 3 * dup <byte-array> :> result 
-    result swap
-    4 <byte-array> dup clone [ Camera_getImage throw-when-false ] 2keep [ le> ] bi@ 2array
-    result swap ] [ f f ] if ;
+        robotino dup camera-image-size [ product 3 * <byte-array> 
+        [ (camera-get-image) ] keep ] keep 
+    ] [
+        f f ] if ;
+
 : new-robotino ( address class -- robotino ) 
     new
     num-distance-sensors f <array> >>sensors-id
