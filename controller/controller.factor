@@ -10,7 +10,7 @@ TUPLE: controller < pack current-robotino
 : get-camera-gadget ( controller -- camera-gadget )
     children>> [ camera-gadget? ] filter first ; 
 : init-camera-gadget ( controller -- )
-    [ get-camera-gadget ] [ current-robotino>> dup camera-init >>robotino ] bi f >>on? drop ;
+    [ get-camera-gadget ] [ current-robotino>> >>robotino ] bi f >>on? drop ;
 : silent-kill ( controller -- )
     current-robotino>> [ kill-robotino ] curry [ drop ] recover ;
 : handle-init ( button controller -- )

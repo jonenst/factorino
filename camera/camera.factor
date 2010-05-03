@@ -17,19 +17,26 @@ TUPLE: camera-gadget < gadget robotino image { on? initial: f } update-thread ;
 : update-image ( camera-gadget -- )
     dup on?>> [
     dup 
-    robotino>> camera-get-image drop raw>image flip 
-    >>image relayout-1 ] [ drop ] if ;
+    robotino>> camera-get-image drop dup [ raw>image flip 
+    >>image relayout-1 ] [ 2drop ] if ] [ drop ] if ;
 
 : disp ( robotino -- )
     <camera-gadget> dup update-image "coucou" open-window ;
-M: camera-gadget graft* [ [ update-image ] curry 20 milliseconds every ] keep (>>update-thread) ;
-M: camera-gadget ungraft* update-thread>> cancel-alarm ;
 M: camera-gadget pref-dim* drop { 320 240 } ;
 M: camera-gadget draw-gadget*
     image>> [
         draw-line
     ] each-index ;
+: start-refreshing ( gadget -- )
+    [ robotino>> t camera-set-streaming ]
+    [ [ [ update-image ] curry 20 milliseconds every ] keep (>>update-thread) ] bi ;
+: stop-refreshing ( gadget -- )
+    [ robotino>> f camera-set-streaming ]
+    [ update-thread>> cancel-alarm ] bi ;
+: handle-down ( gadget -- )
+    [ not ] change-on?
+    dup on?>> [ start-refreshing ] [ stop-refreshing ] if ; 
 
 \ camera-gadget H{
-    { T{ button-down } [ [ not ] change-on? drop ] }
+    { T{ button-down } [ handle-down ] }
 } set-gestures

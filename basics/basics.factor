@@ -125,14 +125,13 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : camera-image-size ( robotino -- dim )
     camera-id>> 4 <byte-array> dup clone [ Camera_imageSize drop ]
     2keep [ le> ] bi@ 2array ;
-:: camera-get-image ( robotino -- image dim )
-    robotino [ camera-id>> ] [ camera-grab? drop ] [ camera-image-size ] tri
+:: camera-get-image ( robotino -- image/f dim/f )
+    robotino camera-grab? [ 
+    robotino [ camera-id>> ] [ camera-image-size ] bi
     product 3 * dup <byte-array> :> result 
     result swap
     4 <byte-array> dup clone [ Camera_getImage throw-when-false ] 2keep [ le> ] bi@ 2array
-    result swap ;
-: camera-init ( robotino -- )
-    [ camera-construct ] [ t camera-set-streaming ] bi ;
+    result swap ] [ f f ] if ;
 : new-robotino ( address class -- robotino ) 
     new
     num-distance-sensors f <array> >>sensors-id
@@ -206,6 +205,7 @@ CONSTANT: IMU-FIFO-LENGTH 15
     {
         [ omnidrive-construct ]
         [ odometry-construct ]
+        [ camera-construct ]
         [ init-all-sensors ]
         [ odometry-reset ]
         [ init-position-refresh ]
