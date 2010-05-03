@@ -1,8 +1,8 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays colors
-kernel opengl sequences ui.render ui.gadgets grouping ui factorino.basics math calendar threads 
-alarms ui.gestures ;
+kernel opengl sequences ui.render ui.gadgets grouping ui math calendar threads 
+alarms ui.gestures factorino.basics ;
 IN: factorino.camera
 
 TUPLE: camera-gadget < gadget robotino image { on? initial: f } update-thread ;
@@ -12,8 +12,6 @@ TUPLE: camera-gadget < gadget robotino image { on? initial: f } update-thread ;
 : draw-line ( line # -- )
     [ draw-pixel ] curry each-index ;
 : raw>image ( raw -- image ) 3 group 320 group ;
-: camera-init ( robotino -- )
-    [ camera-construct ] [ t camera-set-streaming ] bi ;
 : <camera-gadget> ( robotino -- gadget )
     camera-gadget new swap >>robotino ;
 : update-image ( camera-gadget -- )

@@ -6,7 +6,7 @@ math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads factorino.imu
 factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadgets.buttons strings 
 io.encodings.ascii fry io.sockets continuations 
-io.binary factorino.camera ;
+io.binary ;
 IN: factorino.basics
 <PRIVATE
 : surrounding-values ( calibration-table value -- values )
@@ -131,6 +131,8 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     result swap
     4 <byte-array> dup clone [ Camera_getImage throw-when-false ] 2keep [ le> ] bi@ 2array
     result swap ;
+: camera-init ( robotino -- )
+    [ camera-construct ] [ t camera-set-streaming ] bi ;
 : new-robotino ( address class -- robotino ) 
     new
     num-distance-sensors f <array> >>sensors-id
