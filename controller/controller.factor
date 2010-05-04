@@ -2,14 +2,14 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays continuations combinators factorino.basics kernel
 ui.gadgets ui.gadgets.buttons ui.gadgets.packs ui.gestures math locals sequences
-ui.tools.listener ui factorino.camera ;
+ui.tools.listener ui factorino.camera factorino.utils ;
 IN: factorino.controller
 <PRIVATE
 TUPLE: controller < pack current-robotino
 { vx initial: 0.0 } { vy initial: 0.0 } { theta initial: 0.0 } { multiplier initial: 1 } ; 
 
 : remove-camera-gadgets ( controller -- )
-    [ children>> [ camera-gadget? ] filter ] keep [ remove-gadget ] curry each ;
+    children>> [ camera-gadget? ] filter [ unparent ] each ;
 : init-camera-gadget ( controller -- )
     [ remove-camera-gadgets ]
     [ dup current-robotino>> <camera-gadget> add-gadget relayout ] bi ;
@@ -20,7 +20,7 @@ TUPLE: controller < pack current-robotino
     [ silent-kill ]
     [ <init-robotino> >>current-robotino drop ]
     [ init-camera-gadget ] tri ;
-: handle-kill ( button controller -- ) nip [ silent-kill ] [ remove-camera-gadgets ] bi ;
+: handle-kill ( button controller -- ) nip [ remove-camera-gadgets ] [ silent-kill ] bi ;
 : init-button ( controller -- button )
     [ "init" ] dip [ handle-init ] curry <border-button> ;
 : controller-kill-button ( controller -- button )
