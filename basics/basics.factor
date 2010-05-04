@@ -128,6 +128,10 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 :: (camera-get-image) ( robotino byte-array -- )
     robotino camera-id>> byte-array dup length
     4 <byte-array> dup clone Camera_getImage throw-when-false ;
+: camera-get-image* ( robotino byte-array -- )
+    over camera-grab? [
+        (camera-get-image)
+    ] [ 2drop ] if ;
 :: camera-get-image ( robotino -- image/f dim/f )
     robotino camera-grab? [ 
         robotino dup camera-image-size [ product 3 * <byte-array> 
@@ -199,10 +203,10 @@ CONSTANT: IMU-FIFO-LENGTH 15
     [  [ "imu-thread" spawn ] dip (>>imu-thread) ] tri ;
     
 : <init-robotino> ( -- robotino )
-!    "172.26.201.1"
+    "172.26.201.1"
 !  "137.194.64.6:8080"
 !  "137.194.10.31:8080"
-  "137.194.66.211"
+!  "137.194.66.211"
 !  "127.0.0.1:8080"
    <robotino> 
     {

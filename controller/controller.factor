@@ -7,10 +7,12 @@ IN: factorino.controller
 <PRIVATE
 TUPLE: controller < pack current-robotino
 { vx initial: 0.0 } { vy initial: 0.0 } { theta initial: 0.0 } { multiplier initial: 1 } ; 
-: get-camera-gadget ( controller -- camera-gadget )
-    children>> [ camera-gadget? ] filter first ; 
+
+: remove-camera-gadgets ( controller -- )
+    [ children>> [ camera-gadget? ] filter ] keep [ remove-gadget ] curry each ;
 : init-camera-gadget ( controller -- )
-    [ get-camera-gadget ] [ current-robotino>> >>robotino ] bi f >>on? drop ;
+    [ remove-camera-gadgets ]
+    [ dup current-robotino>> <camera-gadget> add-gadget relayout ] bi ;
 : silent-kill ( controller -- )
     current-robotino>> [ kill-robotino ] curry [ drop ] recover ;
 : handle-init ( button controller -- )
@@ -18,8 +20,7 @@ TUPLE: controller < pack current-robotino
     [ silent-kill ]
     [ <init-robotino> >>current-robotino drop ]
     [ init-camera-gadget ] tri ;
-: handle-kill ( button controller -- ) nip [ silent-kill ]
-[ children>> [ camera-gadget? ] filter first f >>on? drop ] bi ;
+: handle-kill ( button controller -- ) nip [ silent-kill ] [ remove-camera-gadgets ] bi ;
 : init-button ( controller -- button )
     [ "init" ] dip [ handle-init ] curry <border-button> ;
 : controller-kill-button ( controller -- button )
@@ -55,8 +56,8 @@ TUPLE: controller < pack current-robotino
     controller new horizontal >>orientation
     dup init-button add-gadget 
     dup controller-kill-button add-gadget
-    camera-gadget new add-gadget 
     ;
+M: controller ungraft* silent-kill ;
 PRIVATE>
 : controller ( -- )
     [ <controller> "controller" open-window ] with-ui ;
