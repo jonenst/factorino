@@ -4,9 +4,9 @@ USING: accessors alarms assocs arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads factorino.imu
-factorino.bindings factorino.functor factorino.types factorino.utils ui ui.gadgets.buttons strings 
+factorino.bindings factorino.functor factorino.types factorino.types.utils factorino.utils ui ui.gadgets.buttons strings 
 io.encodings.ascii fry io.sockets continuations 
-io.binary ;
+io.binary images ;
 IN: factorino.basics
 <PRIVATE
 : surrounding-values ( calibration-table value -- values )
@@ -143,6 +143,34 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     over camera-grab? [ 
         camera-get-image*
     ] [ 2drop ] if ;
+: new-image-needed? ( robotino -- ? )
+   drop t ; ! [ camera-image>> value>> dim>> ] [ camera-image-size ] bi = not ;
+: (update-image) ( robotino -- )
+    dup new-image-needed?
+    [
+        [ camera-get-image <robotino-image> ] [ camera-image>> ] bi set-model
+    ] [
+        dup camera-image>> 
+            [ value>> bitmap>> camera-get-image* ]
+            [ notify-connections ] bi
+    ]
+    if ;
+: update-image ( camera-gadget -- )
+    dup camera-grab? [ (update-image) ] [ drop ] if ;
+: camera-start-refreshing ( robotino -- )
+    [ t camera-set-streaming ]
+    [ [ [ update-image ] curry 1 15 / seconds every ] keep (>>camera-alarm) ] bi ;
+: camera-stop-refreshing ( gadget -- )
+    [ [ f camera-set-streaming ] curry [ drop ] recover ]
+    [ camera-alarm>> [ cancel-alarm ] when* ] bi ;
+: camera-start/stop ( robotino -- )
+    dup observers>> empty? [ camera-stop-refreshing ] [ camera-start-refreshing ] if ;
+: (set-camera-observer) ( observer robotino connection-quot observers-quot -- )
+     '[ [ camera-image>> @ ] [  _ with change-observers camera-start/stop ] 2bi ] call ; inline 
+: register-camera-observer ( observer robotino -- )
+    [ add-connection ] [ swap suffix ] (set-camera-observer) ;
+: unregister-camera-observer ( observer robotino -- )
+    [ remove-connection ] [ remove ] (set-camera-observer) ;
 
 : new-robotino ( address class -- robotino ) 
     new
@@ -158,10 +186,10 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : kill-robotino ( robotino -- )
     { 
         [ stop-position-refresh ]
+        [ camera-stop-refreshing ]
         [ sensors-destroy* ]
         [ bumper-destroy* ]
         [ omnidrive-destroy* ]
-        [ camera-destroy* ]
         [ com-destroy* ] 
     } cleave ;
 : kill-button ( robotino -- button )
