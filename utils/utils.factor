@@ -17,4 +17,6 @@ IN: factorino.utils
 : calc-barycentre ( a b c -- x )
     rot [ - ] curry bi@ swap / ;
 
+: invert-y ( {x,y} -- {x,-y} ) clone [ 1 swap [ neg ] change-nth ] keep ;
+: invert-x ( {x,y} -- {x,-y} ) clone [ 0 swap [ neg ] change-nth ] keep ;
 : debug ( object -- object ) dup get-listener listener-streams [ . ] with-streams* ;
