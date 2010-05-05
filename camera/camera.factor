@@ -13,7 +13,8 @@ TUPLE: camera-gadget < pack robotino { image-control initial: $[ image-control n
     [ [ image-control>> ] [ robotino>> ] bi ] keep
     on?>> [ register-camera-observer ] [ unregister-camera-observer ] if ; 
 : <camera-gadget>* ( -- gadget )
-    camera-gadget new horizontal >>orientation ;
+    camera-gadget new horizontal >>orientation
+    dup image-control>> add-gadget ;
 : <camera-gadget> ( robotino -- gadget )
     <camera-gadget>* swap >>robotino ;
 : disp ( robotino -- )
