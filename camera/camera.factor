@@ -12,8 +12,10 @@ TUPLE: camera-gadget < pack robotino { image-control initial: $[ image-control n
     [ not ] change-on?
     [ [ image-control>> ] [ robotino>> ] bi ] keep
     on?>> [ register-camera-observer ] [ unregister-camera-observer ] if ; 
+: <camera-gadget>* ( -- gadget )
+    camera-gadget new horizontal >>orientation ;
 : <camera-gadget> ( robotino -- gadget )
-    camera-gadget new horizontal >>orientation swap >>robotino ;
+    <camera-gadget>* swap >>robotino ;
 : disp ( robotino -- )
     <camera-gadget> "coucou" open-window ;
 M: camera-gadget pref-dim* drop { 300 300 } ;

@@ -2,25 +2,34 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays continuations combinators factorino.basics kernel
 ui.gadgets ui.gadgets.buttons ui.gadgets.packs ui.gestures math locals sequences
-ui.tools.listener ui factorino.camera factorino.utils ;
+ui.tools.listener ui factorino.camera factorino.utils factorino.sensor-disp ;
 IN: factorino.controller
 <PRIVATE
 TUPLE: controller < pack current-robotino
+init kill camera sensors
 { vx initial: 0.0 } { vy initial: 0.0 } { theta initial: 0.0 } { multiplier initial: 1 } ; 
 
-: remove-camera-gadgets ( controller -- )
-    children>> [ camera-gadget? ] filter [ unparent ] each ;
+: deinit-camera-gadget ( controller -- ) drop ;
 : init-camera-gadget ( controller -- )
-    [ remove-camera-gadgets ]
-    [ dup current-robotino>> <camera-gadget> add-gadget relayout ] bi ;
+    [ camera>> ] [ current-robotino>> ] bi >>robotino handle-down ;
+: init-sensor-gadget ( controller -- )
+    [ sensors>> ] [ current-robotino>> ] bi register-robotino ;
+: deinit-sensor-gadget ( controller -- ) sensors>> unregister-robotino ;
 : silent-kill ( controller -- )
     current-robotino>> [ kill-robotino ] curry [ drop ] recover ;
 : handle-init ( button controller -- )
-    nip 
+    nip { 
     [ silent-kill ]
     [ <init-robotino> >>current-robotino drop ]
-    [ init-camera-gadget ] tri ;
-: handle-kill ( button controller -- ) nip [ remove-camera-gadgets ] [ silent-kill ] bi ;
+    [ init-camera-gadget ] 
+    [ init-sensor-gadget ]
+    } cleave ;
+: handle-kill ( button controller -- ) 
+    nip { 
+        [ deinit-camera-gadget ]
+        [ deinit-sensor-gadget ] 
+        [ silent-kill ] 
+    } cleave ;
 : init-button ( controller -- button )
     [ "init" ] dip [ handle-init ] curry <border-button> ;
 : controller-kill-button ( controller -- button )
@@ -51,11 +60,14 @@ TUPLE: controller < pack current-robotino
     { T{ key-down f f "r" } [ [ 0.9 * ] change-multiplier drop ] }
     { T{ key-down f f "p" } [ [ robotino-push ] curry dup last call-listener ] }
     } set-gestures
-
+: add-store-gadget ( controller gadget accessor -- )
+    [ add-gadget ] bi ; inline
 : <controller> ( -- controller )
     controller new horizontal >>orientation
-    dup init-button add-gadget 
-    dup controller-kill-button add-gadget
+    dup init-button [ >>init ] add-store-gadget
+    dup controller-kill-button [ >>kill ] add-store-gadget
+    <camera-gadget>* [ >>camera ] add-store-gadget
+    <sensor-gadget>* [ >>sensors ] add-store-gadget
     ;
 M: controller ungraft* silent-kill ;
 PRIVATE>
