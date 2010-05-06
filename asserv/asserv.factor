@@ -8,23 +8,26 @@ IN: factorino.asserv
 
 <PRIVATE
 
+CONSTANT: merge-factor 0.8
 : (merge-vectors) ( to-position previous-dir -- result )
-CONSTANT: merge-factor 0.3
     [ [ merge-factor barycentre ] 2map ] when* ;
 : angular-distance ( a1 a2 -- distance )
     [ - ] [ swap - ] 2bi [ 360 rem ] bi@ min ;
 PRIVATE>
-CONSTANT: SPEED-MULTIPLIER 8
+CONSTANT: SPEED-MULTIPLIER 2
 CONSTANT: OMEGA-MULTIPLIER 10
-CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
 CONSTANT: STOP-SPEED 20 ! mm/sec ??
-CONSTANT: MAXIMUM-SPEED 300 ! mm/sec ??
+CONSTANT: MAXIMUM-SPEED 200 ! mm/sec ??
+CONSTANT: MINIMUM-SPEED 10 ! mm/sec ??
 CONSTANT: MAXIMUM-ROTATION 20 ! mm/sec ??
-CONSTANT: MINIMUM-ROTATION 5 ! mm/sec ??
+CONSTANT: MINIMUM-ROTATION 3 ! mm/sec ??
 CONSTANT: XY-THRESHOLD 10 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
-CONSTANT: OBSTACLE_THRESHOLD 1.0
+CONSTANT: OBSTACLE_THRESHOLD 0.9 
 CONSTANT: MOVING-THRESHOLD 1e-9
+
+
+
 : wait-few-updates ( robotino -- )
     yield
     [ com-wait-for-update* ] curry 3 swap times ;
@@ -43,7 +46,7 @@ CONSTANT: MOVING-THRESHOLD 1e-9
     MOVING-THRESHOLD > ;
 <PRIVATE
 : to-position-speed ( norm -- speed )
-    SPEED-MULTIPLIER * 0 MAXIMUM-SPEED clamp ;
+    SPEED-MULTIPLIER * MINIMUM-SPEED MAXIMUM-SPEED clamp ;
 
 : to-position-vector ( robotino position -- vector )
     swap
@@ -65,7 +68,7 @@ CONSTANT: MOVING-THRESHOLD 1e-9
     adjust-current
     ] when - ;
 : ((to-position-omega)) ( current destination -- omega )
-    2dup [ "at : " write . ] [ "going to : " write . ] bi*
+    ! 2dup [ "at : " write . ] [ "going to : " write . ] bi*
     swap chose-side OMEGA-MULTIPLIER * 
     fit-to-range ;
 : (to-position-omega) ( robotino phi -- omega )
@@ -93,8 +96,8 @@ CONSTANT: MOVING-THRESHOLD 1e-9
         2drop t 
     ] if ;
 : ((theta-at-position?)) ( phi theta -- ? )
-    2dup [ "at : " write . ] [ "going to : " write . ] bi*
-    swap dup [  
+    ! 2dup [ "at : " write . ] [ "going to : " write . ] bi*
+    dup [  
         angular-distance PHI-THRESHOLD <
     ] [
         2drop t
@@ -159,7 +162,7 @@ DEFER: drive-position
 : block-condition ( robotino current-dir -- ? )
     ! { [ against-obstacle? ] [ drop moving? not ] } 2|| ; 
     against-obstacle? ;
-:: (drive-position) ( stop? robotino position quot -- blocking-pos/f )
+:: drive-position ( stop? robotino position -- blocking-pos/f )
     robotino position go-position :> current-dir
     robotino current-dir block-condition [
         robotino stop-robotino position
@@ -168,9 +171,7 @@ DEFER: drive-position
         ! WTF, com-wait-for-update* is blocking !! 
         yield
         stop? robotino position continue-driving
-    ] if quot call( -- ) ;
-: drive-position ( stop? robotino position -- blocking-pos/f )
-    [ ] (drive-position) ; inline
+    ] if ;
 
 : drive-xy ( stop? robotino {x,y} -- blocking-position/f )
     f <position> drive-position ;
@@ -195,7 +196,8 @@ PRIVATE>
 <PRIVATE
 : face-initial-angle ( robotino -- )
     dup initial-angle>> rotate-to ;
-M: 2d-point drive-to* [ assign-initial-angle ] [ drop face-initial-angle ] [ drive-xy ] 2tri ;
+M: 2d-point drive-to* ! [ assign-initial-angle ] [ drop face-initial-angle ] 
+[ drive-xy ] call ;
 M: array drive-to* drive-path ;
 M: position drive-to* drive-position ;
 
