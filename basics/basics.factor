@@ -55,11 +55,14 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     [ omnidrive-id>> ] [ com-id>> ] bi
     OmniDrive_setComId throw-when-false ;
 : omnidrive-destroy ( robotino -- ) omnidrive-id>> OmniDrive_destroy throw-when-false ;
+: try-n-times ( function n -- BOOL )
+    dup zero? [ 2drop FALSE ] [
+        over call( -- x ) TRUE = [ 2drop TRUE ] [ 1 - 10 milliseconds sleep try-n-times ] if
+    ]  if ; inline recursive 
+: 4curry ( a b c d quot -- quot ) 2curry 2curry ;
 :: omnidrive-set-velocity ( robotino v omega -- )
     robotino omnidrive-id>> v first2 omega
-    [ OmniDrive_setVelocity ] curry 3curry :> the-function
-    the-function call FALSE = [ 20 milliseconds sleep the-function call ] [ TRUE ] if
-    throw-when-false 
+    [ OmniDrive_setVelocity ] 4curry 20 try-n-times throw-when-false 
     v omega <position> robotino (>>current-direction) ;
 
 : bumper-construct ( robotino -- )
@@ -111,9 +114,9 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : filtered-xy ( robotino -- phi ) odometry-xy ;
 : filtered-position ( robotino -- phi ) [ filtered-xy ] [ filtered-phi ] bi <position> ;
 : (odometry-set) ( robotino x y phi -- ) [ odometry-id>> ] 3dip Odometry_set throw-when-false ;
-: odometry-set ( robotino {x,y,phi} -- ) first3 (odometry-set) ;
+: odometry-set ( robotino position -- ) [ {x,y}>> first2 ] [ phi>> ] bi (odometry-set) ;
 : odometry-set-phi ( robotino phi -- ) [ dup odometry-xy first2 ] dip (odometry-set) ;
-: odometry-reset ( robotino -- ) { 0 0 0 } odometry-set ;
+: odometry-reset ( robotino -- ) dup raw-imu>> >>imu-offset  { 0 0 } 0 <position> odometry-set ;
 
 : camera-construct ( robotino -- )
     Camera_construct >>camera-id
@@ -144,7 +147,7 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
         camera-get-image*
     ] [ 2drop ] if ;
 : new-image-needed? ( robotino -- ? )
-   drop t ; ! [ camera-image>> value>> dim>> ] [ camera-image-size ] bi = not ;
+   [ camera-image>> value>> dim>> ] [ camera-image-size ] bi = not ;
 : (update-image) ( robotino -- )
     dup new-image-needed?
     [
@@ -213,12 +216,13 @@ CONSTANT: imu-port 54321
     dup current-direction>> {x,y}>> norm 0 1 v~ [ (merge-imu) ] [ 2drop ] if ;
 : update-phi-with-imu ( robotino -- )
     dup imu-angle>> odometry-set-phi ;
-CONSTANT: IMU-FIFO-LENGTH 15
-: store-imu ( imu-angle robotino -- )
-    nip [ imu-angle>> ] keep [ dup length IMU-FIFO-LENGTH > [ rest ] when swap suffix ] with change-prev-imu-angle drop ;
+CONSTANT: IMU-FIFO-LENGTH 30
+: store-imu ( robotino -- )
+    [ imu-angle>> ] keep [ dup length IMU-FIFO-LENGTH > [ rest ] when swap suffix ] with change-prev-imu-angle drop ;
 : refresh-imu ( imu-angle robotino -- )
     over [ 
-        [ store-imu ] [ (>>imu-angle) ] [ (merge-imu) ] 2tri 
+        { [ nip store-imu ] [ [ imu-offset>> - ] keep (>>imu-angle) ] [ (merge-imu) ]
+        [ (>>raw-imu) ] } 2cleave 
     ] [
         2drop
     ] if ;
@@ -229,7 +233,7 @@ CONSTANT: IMU-FIFO-LENGTH 15
         ] with-client
     ] ; inline
 : refresh-quotation ( remote encoding robotino -- quot )
-    [ [ (refresh-quotation) ] [ 2drop 2drop ] recover ] 3curry ; inline
+    [ [ (refresh-quotation) call ] [ [ 3drop ] dip "imu failed for some reason" debug drop drop ] recover ] 3curry ; inline
 : init-imu-refresh ( robotino -- )
     [ com-address* imu-port <inet> ascii ]
     [ refresh-quotation ]

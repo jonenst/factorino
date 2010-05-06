@@ -3,18 +3,28 @@
 USING: accessors arrays colors
 kernel opengl sequences ui.render ui.gadgets grouping ui math calendar threads 
 alarms ui.gestures factorino.basics images images.viewer ui.gadgets.packs 
-combinators.short-circuit factorino.utils io continuations literals ;
+combinators.short-circuit factorino.utils io continuations literals images.loader ui.gadgets.books 
+namespaces models images.jpeg ;
+FROM: models => change-model ;
 IN: factorino.camera
 
-TUPLE: camera-gadget < pack robotino { image-control initial: $[ image-control new ] } { on? initial: f } ;
+SYMBOL: no-signal-image
 
+TUPLE: camera-gadget < book robotino { image-control initial: $[ image-control new ] } { on? initial: f } ;
+: load-default-image ( -- image )
+    "resource:work/factorino/camera/no-signal.jpg" load-image [ no-signal-image set ] keep ;
+: default-image ( -- image )
+    no-signal-image get [ load-default-image ] unless* ;
 : handle-down ( gadget -- )
     [ not ] change-on?
+    dup model>> [ 1 swap - ] change-model
     [ [ image-control>> ] [ robotino>> ] bi ] keep
     on?>> [ register-camera-observer ] [ unregister-camera-observer ] if ; 
 : <camera-gadget>* ( -- gadget )
-    camera-gadget new horizontal >>orientation
-    dup image-control>> add-gadget ;
+    0 <model> camera-gadget new-book
+    default-image <image-gadget> add-gadget
+    dup image-control>> add-gadget 
+    ;
 : <camera-gadget> ( robotino -- gadget )
     <camera-gadget>* swap >>robotino ;
 : disp ( robotino -- )

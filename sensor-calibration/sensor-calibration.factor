@@ -48,7 +48,7 @@ CONSTANT: FACE-THRESHOLD 3
     ] with { } map>assoc ; inline
 : with-wall-facing ( robotino quot -- quot' )
     swap [ face-flat-wall ] curry prepose ; inline
-: one-sensor-measure ( wall-sensor -- quot )
+: one-sensor-measure ( wall-sensor -- quot: ( robotino positions wall-sensor -- ) )
     '[ 
         [ [ _ ] dip
           [ wait-few-updates ]
@@ -61,7 +61,7 @@ CONSTANT: FACE-THRESHOLD 3
 
 
 : measure-distances-at* ( wall-sensor robotino positions -- table )
-    from-robotino-base measure-distances-at ; inline
+    from-robotino-base measure-distances-noface ; inline
 : front-rotations ( -- positions )
     -20 20 2 <range> [ { 0 0 } swap <position> ] map ;
 : front-values ( sensor robotino -- measures )

@@ -1,14 +1,14 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: factorino.bindings kernel models math arrays sequences 
-combinators.short-circuit literals factorino.types.utils models ;
+combinators.short-circuit literals factorino.types.utils ;
 IN: factorino.types
 
 TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id camera-id 
 current-direction initial-angle 
 current-position position-refresh-alarm
 { camera-image initial: $[ { } clone { 0 0 } <robotino-image> <model> ] } camera-alarm observers
-{ imu-angle initial: 0.0 } { prev-imu-angle initial: { } } imu-thread filtered-phi
+{ imu-angle initial: 0.0 } { prev-imu-angle initial: { } } imu-thread filtered-phi { imu-offset initial: 0.0 } { raw-imu initial: 0.0 }
 calibration-table
 ;
 TUPLE: robotino-position-model < model ;

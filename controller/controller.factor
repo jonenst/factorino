@@ -17,18 +17,20 @@ init kill camera sensors
 : deinit-sensor-gadget ( controller -- ) sensors>> unregister-robotino ;
 : silent-kill ( controller -- )
     current-robotino>> [ kill-robotino ] curry [ drop ] recover ;
-: handle-init ( button controller -- )
-    nip { 
-    [ silent-kill ]
-    [ <init-robotino> >>current-robotino drop ]
-    [ init-camera-gadget ] 
-    [ init-sensor-gadget ]
-    } cleave ;
-: handle-kill ( button controller -- ) 
-    nip { 
+: (handle-kill) ( controller -- )
+    { 
         [ deinit-camera-gadget ]
         [ deinit-sensor-gadget ] 
         [ silent-kill ] 
+    } cleave ;
+: handle-kill ( button controller -- ) 
+    nip (handle-kill) ;
+: handle-init ( button controller -- )
+    nip { 
+    [ (handle-kill) ]
+    [ <init-robotino> >>current-robotino drop ]
+    [ init-camera-gadget ] 
+    [ init-sensor-gadget ]
     } cleave ;
 : init-button ( controller -- button )
     [ "init" ] dip [ handle-init ] curry <border-button> ;

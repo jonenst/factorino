@@ -247,13 +247,6 @@ HELP: with-wall-facing
 }
 { $description "" } ;
 
-HELP: ~
-{ $values
-    { "a" null } { "b" null }
-    { "equal?" null }
-}
-{ $description "" } ;
-
 ARTICLE: "factorino.sensor-calibration" "factorino.sensor-calibration"
 { $vocab-link "factorino.sensor-calibration" }
 ;

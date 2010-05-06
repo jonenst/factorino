@@ -1,11 +1,11 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors alarms arrays calendar colors combinators
-delegate factorino.maps.display.common factorino.maps.general
-kernel math math.functions math.rectangles math.vectors models
-namespaces opengl prettyprint sequences ui ui.gadgets
-ui.gestures ui.render threads 
-factorino.types factorino.driving.utils ;
+delegate factorino.driving.utils factorino.maps.display.common
+factorino.maps.general factorino.types factorino.utils kernel
+math math.functions math.rectangles math.vectors models
+namespaces opengl prettyprint sequences threads ui ui.gadgets
+ui.gestures ui.render ;
 IN: factorino.maps.display
 
 <PRIVATE
