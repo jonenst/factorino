@@ -2,7 +2,7 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays calendar combinators.short-circuit
 factorino.basics factorino.types factorino.utils io kernel math math.order math.vectors
-prettyprint threads sequences locals math.functions tools.time factorino.imu ;
+prettyprint threads sequences locals math.functions factorino.imu ;
 FROM: factorino.types.private => fix-angle ;
 IN: factorino.asserv
 
@@ -24,26 +24,13 @@ CONSTANT: MINIMUM-ROTATION 3 ! mm/sec ??
 CONSTANT: XY-THRESHOLD 10 ! mm ??
 CONSTANT: PHI-THRESHOLD 1 ! degrees
 CONSTANT: OBSTACLE_THRESHOLD 0.9 
-CONSTANT: MOVING-THRESHOLD 1e-9
 
 
 
 : wait-few-updates ( robotino -- )
     yield
     [ com-wait-for-update* ] curry 3 swap times ;
-: moving? ( robotino -- ? )
-    [ 
-        [ filtered-xy ]
-        ! 100 milliseconds sleep
-        [ wait-few-updates ]
-        [ filtered-xy ] tri
-    ] benchmark
-    dup "time was : " write . yield
-    [ v- norm ] dip / 
-    dup "observed velocity is " write 9 10^ * 
-    . "---" print 
-    ! drop f ;
-    MOVING-THRESHOLD > ;
+
 <PRIVATE
 : to-position-speed ( norm -- speed )
     SPEED-MULTIPLIER * MINIMUM-SPEED MAXIMUM-SPEED clamp ;
@@ -159,9 +146,10 @@ DEFER: drive-position
     ] [
         drive-position
     ] if ;
+: moving? ( robotino -- ? )
+    measured-speed>> MOVING-THRESHOLD > ;
 : block-condition ( robotino current-dir -- ? )
-    ! { [ against-obstacle? ] [ drop moving? not ] } 2|| ; 
-    against-obstacle? ;
+    { [ against-obstacle? ] [ drop { [ should-be-moving?>> ] [ moving? not "debug: " write dup . ] } 1&& ] } 2|| ; 
 :: drive-position ( stop? robotino position -- blocking-pos/f )
     robotino position go-position :> current-dir
     robotino current-dir block-condition [

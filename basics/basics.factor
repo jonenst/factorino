@@ -6,7 +6,7 @@ math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads factorino.imu
 factorino.bindings factorino.functor factorino.types factorino.types.utils factorino.utils ui ui.gadgets.buttons strings 
 io.encodings.ascii fry io.sockets continuations 
-io.binary images ;
+io.binary images tools.time io ;
 IN: factorino.basics
 <PRIVATE
 : surrounding-values ( calibration-table value -- values )
@@ -43,7 +43,7 @@ M: array sensors-destroy* [ sensors-destroy* ] each ;
 M: integer com-connect* Com_connect throw-when-false ; 
 M: integer com-disconnect* Com_disconnect throw-when-false ; 
 M: integer com-destroy* Com_destroy throw-when-false ;
-M: integer com-wait-for-update* Com_waitForUpdate throw-when-false ;
+M: integer com-wait-for-update* drop 50 milliseconds sleep ;
 M: integer com-address* 
     256 dup <byte-array>
     [ swap Com_address throw-when-false ] keep [ 0 = not ] filter >string ;
@@ -60,10 +60,20 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
         over call( -- x ) TRUE = [ 2drop TRUE ] [ 1 - 10 milliseconds sleep try-n-times ] if
     ]  if ; inline recursive 
 : 4curry ( a b c d quot -- quot ) 2curry 2curry ;
+
+CONSTANT: MOVING-THRESHOLD 1
+: set-should-be-moving ( robotino v -- )
+    norm MOVING-THRESHOLD > [
+        [ [ t >>should-be-moving? ] curry 500 milliseconds later ] keep (>>should-be-moving-alarm) 
+    ] [ 
+        [ should-be-moving-alarm>> [ cancel-alarm ] when* ]
+        [ f >>should-be-moving-alarm f >>should-be-moving? drop ] bi
+    ] if ;
 :: omnidrive-set-velocity ( robotino v omega -- )
     robotino omnidrive-id>> v first2 omega
-    [ OmniDrive_setVelocity ] 4curry 20 try-n-times throw-when-false 
-    v omega <position> robotino (>>current-direction) ;
+    [ OmniDrive_setVelocity ] 4curry 3 try-n-times throw-when-false 
+    v omega <position> robotino (>>current-direction)
+    robotino v set-should-be-moving ;
 
 : bumper-construct ( robotino -- )
     Bumper_construct >>bumper-id
@@ -186,19 +196,6 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     \ robotino new-robotino ;
 : stop-position-refresh ( robotino -- )
     position-refresh-alarm>> [ cancel-alarm ] when* ;
-: kill-robotino ( robotino -- )
-    { 
-        [ stop-position-refresh ]
-        [ camera-stop-refreshing ]
-        [ sensors-destroy* ]
-        [ bumper-destroy* ]
-        [ omnidrive-destroy* ]
-        [ com-destroy* ] 
-    } cleave ;
-: kill-button ( robotino -- button )
-    "KILL ME!" swap [ kill-robotino drop ] curry <border-button> ;
-: kill-window ( robotino -- )
-    kill-button [ "kill-switch" open-window ] curry with-ui ;
 : refresh-position ( robotino -- )
     [ odometry-position ] [ current-position>> ] bi set-model ;
 : init-position-refresh ( robotino -- )
@@ -228,7 +225,7 @@ CONSTANT: IMU-FIFO-LENGTH 30
     ] if ;
 : (refresh-quotation) ( remote encoding robotino -- quot )
     '[ _ _  [ [
-                imu-angle _ refresh-imu t 
+                imu-angle _ [ refresh-imu ] [ refresh-imu?>> ] bi
             ] loop
         ] with-client
     ] ; inline
@@ -238,7 +235,40 @@ CONSTANT: IMU-FIFO-LENGTH 30
     [ com-address* imu-port <inet> ascii ]
     [ refresh-quotation ]
     [  [ "imu-thread" spawn ] dip (>>imu-thread) ] tri ;
-    
+: stop-imu-refresh ( robotino -- )
+    f >>refresh-imu? drop ;
+: calc-speed ( robotino -- speed )
+    [ 
+        [ filtered-xy 
+          100 milliseconds sleep ]
+        [ filtered-xy ] bi 
+    ] benchmark 9 10^ /
+    [ v- norm ] dip / ;
+: refresh-speed ( robotino -- ) [ calc-speed ] [ (>>measured-speed) ] bi ;
+: refresh-speed-loop ( robotino -- )
+    [ [ refresh-speed ] [ measure-speed?>> ] bi ] curry loop ;
+
+: init-refresh-speed ( robotino -- )
+    [ [ refresh-speed-loop ] curry "refreshing speed thread" spawn ] keep (>>measure-speed-alarm) ;
+: stop-refresh-speed ( robotino -- )
+   f >>measure-speed? drop ; 
+
+: kill-robotino ( robotino -- )
+    { 
+        [ stop-position-refresh ]
+        [ stop-refresh-speed ]
+        [ stop-imu-refresh ]
+        [ camera-stop-refreshing ]
+        [ sensors-destroy* ]
+        [ bumper-destroy* ]
+        [ omnidrive-destroy* ]
+        [ com-destroy* ] 
+    } cleave ;
+: kill-button ( robotino -- button )
+    "KILL ME!" swap [ kill-robotino drop ] curry <border-button> ;
+: kill-window ( robotino -- )
+    kill-button [ "kill-switch" open-window ] curry with-ui ;
+   
 : <init-robotino> ( -- robotino )
     "172.26.201.1"
 !  "137.194.64.6:8080"
@@ -253,6 +283,7 @@ CONSTANT: IMU-FIFO-LENGTH 30
         [ init-all-sensors ]
         [ odometry-reset ]
         [ init-position-refresh ]
+        [ init-refresh-speed ]
         [ init-imu-refresh ] 
         [ ] 
     }
