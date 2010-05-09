@@ -10,11 +10,14 @@ IN: factorino.camera
 
 SYMBOL: no-signal-image
 
-TUPLE: camera-gadget < book robotino { image-control initial: $[ image-control new ] } { on? initial: f } ;
+TUPLE: camera-gadget < book robotino image-control { on? initial: f } ;
 : load-default-image ( -- image )
     "resource:work/factorino/camera/no-signal.jpg" load-image [ no-signal-image set ] keep ;
 : default-image ( -- image )
     no-signal-image get [ load-default-image ] unless* ;
+: register-camera ( camera-gadget robotino -- ) >>robotino drop ;
+: unregister-camera ( camera-gadget -- )
+    [ image-control>> ] [ robotino>> ] bi [ unregister-camera-observer ] [ drop ] if* ;
 : handle-down ( gadget -- )
     [ not ] change-on?
     dup model>> [ 1 swap - ] change-model
@@ -23,7 +26,8 @@ TUPLE: camera-gadget < book robotino { image-control initial: $[ image-control n
 : <camera-gadget>* ( -- gadget )
     0 <model> camera-gadget new-book
     default-image <image-gadget> add-gadget
-    dup image-control>> add-gadget 
+
+    image-control new >>image-control dup image-control>> add-gadget 
     ;
 : <camera-gadget> ( robotino -- gadget )
     <camera-gadget>* swap >>robotino ;

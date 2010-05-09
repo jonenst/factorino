@@ -9,9 +9,9 @@ TUPLE: controller < pack current-robotino
 init kill camera sensors
 { vx initial: 0.0 } { vy initial: 0.0 } { theta initial: 0.0 } { multiplier initial: 1 } ; 
 
-: deinit-camera-gadget ( controller -- ) drop ;
+: deinit-camera-gadget ( controller -- ) camera>> unregister-camera ;
 : init-camera-gadget ( controller -- )
-    [ camera>> ] [ current-robotino>> ] bi >>robotino handle-down ;
+    [ camera>> ] [ current-robotino>> ] bi register-camera ;
 : init-sensor-gadget ( controller -- )
     [ sensors>> ] [ current-robotino>> ] bi register-robotino ;
 : deinit-sensor-gadget ( controller -- ) sensors>> unregister-robotino ;
