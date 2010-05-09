@@ -61,12 +61,16 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
     ]  if ; inline recursive 
 : 4curry ( a b c d quot -- quot ) 2curry 2curry ;
 
+! TODO: check that we're moving in the right direction to catch partial blocks ? Does this happen ?
 CONSTANT: MOVING-THRESHOLD 1
 : set-should-be-moving ( robotino v -- )
-    norm MOVING-THRESHOLD > [
-        [ [ t >>should-be-moving? ] curry 500 milliseconds later ] keep (>>should-be-moving-alarm) 
+    norm MOVING-THRESHOLD > 
+        [ dup should-be-moving-alarm>> 
+            [ drop ]
+            [ [ [ t >>should-be-moving? ] curry 500 milliseconds later ] keep (>>should-be-moving-alarm) ]
+            if
     ] [ 
-        [ should-be-moving-alarm>> [ cancel-alarm ] when* ]
+        [ should-be-moving-alarm>> [ cancel-alarm "alarm canceled" print ] when* ]
         [ f >>should-be-moving-alarm f >>should-be-moving? drop ] bi
     ] if ;
 :: omnidrive-set-velocity ( robotino v omega -- )
@@ -240,7 +244,7 @@ CONSTANT: IMU-FIFO-LENGTH 30
 : calc-speed ( robotino -- speed )
     [ 
         [ filtered-xy 
-          100 milliseconds sleep ]
+          50 milliseconds sleep ]
         [ filtered-xy ] bi 
     ] benchmark 9 10^ /
     [ v- norm ] dip / ;
