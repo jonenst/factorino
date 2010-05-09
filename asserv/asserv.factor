@@ -149,7 +149,7 @@ DEFER: drive-position
 : moving? ( robotino -- ? )
     measured-speed>> MOVING-THRESHOLD > ;
 : block-condition ( robotino current-dir -- ? )
-    { [ against-obstacle? ] [ drop { [ should-be-moving?>> ] [ moving? not "debug: " write dup . ] } 1&& ] } 2|| ; 
+    { [ against-obstacle? ] [ drop { [ should-be-moving?>> "should be moving is :" write dup . ] [ moving? "moving is : " write dup . not ] } 1&& ] } 2|| ; 
 :: drive-position ( stop? robotino position -- blocking-pos/f )
     robotino position go-position :> current-dir
     robotino current-dir block-condition [
