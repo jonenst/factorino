@@ -148,18 +148,24 @@ DEFER: drive-position
     ] if ;
 : moving? ( robotino -- ? )
     measured-speed>> MOVING-THRESHOLD > ;
-: block-condition ( robotino current-dir -- ? )
-    { [ against-obstacle? ] [ drop { [ should-be-moving?>> "should be moving is :" write dup . ] [ moving? "moving is : " write dup . not ] } 1&& ] } 2|| ; 
+SINGLETON: +obstacle-seen+
+SINGLETON: +hard-block+
+: block-condition ( robotino current-dir -- block-info/f )
+    over { [ should-be-moving?>> ] [ moving? not ] } 1&& [ 2drop +hard-block+ ] [
+        2dup against-obstacle? [ 2drop +obstacle-seen+ ] [ 2drop f ] if
+    ] if ;
 :: drive-position ( stop? robotino position -- blocking-pos/f )
     robotino position go-position :> current-dir
     robotino current-dir block-condition [
-        robotino stop-robotino position
+        robotino stop-robotino
+        +hard-block+ = [ 1.5 seconds sleep ] when
+        position
     ] [
         robotino com-wait-for-update*
         ! WTF, com-wait-for-update* is blocking !! 
         yield
         stop? robotino position continue-driving
-    ] if ;
+    ] if* ;
 
 : drive-xy ( stop? robotino {x,y} -- blocking-position/f )
     f <position> drive-position ;
