@@ -26,8 +26,7 @@ TUPLE: camera-gadget < book robotino image-control { on? initial: f } ;
 : <camera-gadget>* ( -- gadget )
     0 <model> camera-gadget new-book
     default-image <image-gadget> add-gadget
-
-    image-control new >>image-control dup image-control>> add-gadget 
+    image-control new-image-gadget >>image-control dup image-control>> add-gadget 
     ;
 : <camera-gadget> ( robotino -- gadget )
     <camera-gadget>* swap >>robotino ;

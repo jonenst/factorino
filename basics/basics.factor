@@ -6,7 +6,7 @@ math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads factorino.imu
 factorino.bindings factorino.functor factorino.types factorino.types.utils factorino.utils ui ui.gadgets.buttons strings 
 io.encodings.ascii fry io.sockets continuations 
-io.binary images tools.time io ;
+io.binary images tools.time io images.viewer ;
 IN: factorino.basics
 <PRIVATE
 : surrounding-values ( calibration-table value -- values )
@@ -185,7 +185,7 @@ CONSTANT: MOVING-THRESHOLD 1
 : (set-camera-observer) ( observer robotino connection-quot observers-quot -- )
      '[ [ camera-image>> @ ] [  _ with change-observers camera-start/stop ] 2bi ] call ; inline 
 : register-camera-observer ( observer robotino -- )
-    [ add-connection ] [ swap suffix ] (set-camera-observer) ;
+    [ [ add-connection ] [ set-image ] 2bi drop ] [ swap suffix ] (set-camera-observer) ;
 : unregister-camera-observer ( observer robotino -- )
     [ remove-connection ] [ remove ] (set-camera-observer) ;
 
