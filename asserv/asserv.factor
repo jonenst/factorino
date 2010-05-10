@@ -2,7 +2,7 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays calendar combinators.short-circuit
 factorino.basics factorino.types factorino.utils io kernel math math.order math.vectors
-prettyprint threads sequences locals math.functions factorino.imu ;
+prettyprint threads sequences locals math.functions factorino.imu assocs ;
 FROM: factorino.types.private => fix-angle ;
 IN: factorino.asserv
 
@@ -171,10 +171,21 @@ SINGLETON: +hard-block+
     f <position> drive-position ;
 
 GENERIC: drive-to* ( stop? robotino destination -- blocking-position/f )
+:: drive-path* ( quot: ( -- ) stop? robotino path -- blocking-position/f )
+    quot call( -- )
+    path empty? [
+        stop? [ robotino stop-robotino ] when f
+    ] [
+        path unclip :> ( rest first ) 
+            f robotino first drive-to* :> blocking-pos/f
+            blocking-pos/f [ 
+               blocking-pos/f
+            ] [ 
+              quot stop? robotino rest drive-path*
+            ] if 
+    ] if ;
 : drive-path ( stop? robotino path -- blocking-position/f )
-    [ swap [ stop-robotino ] [ drop ] if f ]
-    [ unclip pick swap [ f ] 2dip drive-to* [ [ 3drop ] dip ] [ drive-path ] if* ]
-    if-empty ;
+[ [ ] ] 3dip drive-path* ;
 PRIVATE> 
 : (rotate-to) ( robotino phi -- )
     "rotate-to" print yield
@@ -190,8 +201,8 @@ PRIVATE>
 <PRIVATE
 : face-initial-angle ( robotino -- )
     dup initial-angle>> rotate-to ;
-M: 2d-point drive-to* ! [ assign-initial-angle ] [ drop face-initial-angle ] 
-[ drive-xy ] call ;
+M: 2d-point drive-to*
+    [ drive-xy ] call ;
 M: array drive-to* drive-path ;
 M: position drive-to* drive-position ;
 
@@ -219,3 +230,10 @@ M: array drive-from-here*
     [ drop f ]
     [ unclip pick swap drive-from-here* [ 2nip ] [ drive-from-here ] if* ] if-empty ;
 
+: drive-execute-path ( quot: ( -- ) robotino path -- blocking-pos/f ) [ f ] 2dip drive-path* ;
+
+
+: seen-obstacles ( robotino -- angles ) 
+    [ sensors-values ] [ sensors-headings ] bi
+    zip [ first OBSTACLE_THRESHOLD < ] filter values ;
+    
