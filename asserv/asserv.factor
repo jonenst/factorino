@@ -235,5 +235,5 @@ M: array drive-from-here*
 
 : seen-obstacles ( robotino -- angles ) 
     [ sensors-values ] [ sensors-headings ] bi
-    zip [ first OBSTACLE_THRESHOLD < ] filter values ;
+    zip [ first OBSTACLE_THRESHOLD > ] filter values ;
     
