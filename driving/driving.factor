@@ -42,7 +42,9 @@ IN: factorino.driving
 
 
 :: explore-path ( map robotino cell-path -- free-cells obstacle/f ) 
-    [ map robotino register-obstacles ] robotino cell-path
+    [ 
+    ! map robotino register-obstacles
+    ] robotino cell-path
     [ >real-path drive-execute-path ] keep
     over [ [ {x,y}>> {x,y}>{i,j} ] dip [ before ] 2keep drop ] [ swap ] if ;
 : is-on? ( robotino cell -- ? )
