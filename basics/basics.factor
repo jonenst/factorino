@@ -63,16 +63,17 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 
 ! TODO: check that we're moving in the right direction to catch partial blocks ? Does this happen ?
 CONSTANT: MOVING-THRESHOLD 1
-: set-should-be-moving ( robotino v -- )
-    norm MOVING-THRESHOLD > 
-        [ dup should-be-moving-alarm>> 
-            [ drop ]
-            [ [ [ t >>should-be-moving? ] curry 500 milliseconds later ] keep (>>should-be-moving-alarm) ]
-            if
-    ] [ 
-        [ should-be-moving-alarm>> [ cancel-alarm "alarm canceled" print ] when* ]
-        [ f >>should-be-moving-alarm f >>should-be-moving? drop ] bi
+: ?set-later ( robotino -- )
+    dup should-be-moving-alarm>> [
+        drop
+    ] [
+        [ [ t >>should-be-moving? ] curry 500 milliseconds later ] keep (>>should-be-moving-alarm)
     ] if ;
+: cancel-set ( robotino -- )
+    [ should-be-moving-alarm>> [ cancel-alarm "alarm canceled" print ] when* ]
+    [ f >>should-be-moving-alarm f >>should-be-moving? drop ] bi ;
+: set-should-be-moving ( robotino v -- )
+    norm MOVING-THRESHOLD > [ ?set-later ] [ cancel-set ] if ;
 :: omnidrive-set-velocity ( robotino v omega -- )
     robotino omnidrive-id>> v first2 omega
     [ OmniDrive_setVelocity ] 4curry 3 try-n-times throw-when-false 
