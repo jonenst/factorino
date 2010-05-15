@@ -70,7 +70,7 @@ CONSTANT: MOVING-THRESHOLD 1
         [ [ t >>should-be-moving? ] curry 500 milliseconds later ] keep (>>should-be-moving-alarm)
     ] if ;
 : cancel-set ( robotino -- )
-    [ should-be-moving-alarm>> [ cancel-alarm "alarm canceled" print ] when* ]
+    [ should-be-moving-alarm>> [ cancel-alarm ] when* ]
     [ f >>should-be-moving-alarm f >>should-be-moving? drop ] bi ;
 : set-should-be-moving ( robotino v -- )
     norm MOVING-THRESHOLD > [ ?set-later ] [ cancel-set ] if ;
