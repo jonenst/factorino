@@ -50,7 +50,7 @@ IN: factorino.driving
 : is-on? ( robotino cell -- ? )
     [ odometry-xy {x,y}>{i,j} ] dip = ;
 : go-end ( robotino cell-path -- )
-    [ drop ] [ last drive-to drop ] if-empty ;
+    [ drop ] [ last {i,j}>{x,y} drive-to drop ] if-empty ;
 ! TODO GO back the whole way if we have to !
 : ?go-back ( cell-path robotino obstacle -- )
     2dup is-on? [ drop swap go-end ] [ 3drop ] if ;
