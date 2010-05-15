@@ -2,8 +2,8 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: factorino.driving factorino.maps.table
 factorino.maps.general kernel
-factorino.driving.utils
-factorino.maps.display ;
+factorino.driving.utils math calendar alarms
+factorino.maps.display ui.gadgets ;
 IN: factorino.explore
 
 DEFER: explore
@@ -15,6 +15,10 @@ PRIVATE>
     [ random-unexplored {i,j}>{x,y} ] keep 
     over [ explore-and-loop ] [ 3drop ] if ;
 
-: test-explore ( robotino -- map )
-    { 20 20 } \ table-map <map> display
-    2dup register-robotino [ explore ] keep ;
+CONSTANT: FIRST_TIME_DECAY_TIME 300
+: init-decay ( map -- alarm )
+    [ [ decay ] [ relayout-1 ] bi ] curry FIRST_TIME_DECAY_TIME OBSTACLE-INCREMENT-OFFSET / seconds every ;
+: test-explore ( robotino -- map alarm )
+    { 20 20 } \ table-map <map>
+    dup init-decay
+    [ display 2dup register-robotino [ explore ] keep ] dip ; 

@@ -29,12 +29,12 @@ TUPLE: map-gadget < gadget map zoom origin-offset in-drag-origin-offset current-
 : black ( -- color ) 0 0 0 1 <rgba> ;
 : set-state-color ( state -- )
     { 
-        { OBSTACLE    [ COLOR: black ] }
-        { UNEXPLORED  [ COLOR: gray ] } 
+        { FREE        [ COLOR: green ] }
+        { UNEXPLORED  [ COLOR: yellow ] } 
         { UNREACHABLE [ COLOR: red ] } 
         { ROBOTINO    [ COLOR: pink ] } 
         { CURRENT-PATH [ COLOR: cyan ] } 
-        [ drop COLOR: white ]
+        [ OBSTACLE - MAX-OBSTACLE /f 1 swap - dup dup 1 <rgba> ]
     } case gl-color ;
 
 : draw-state ( pos map-gadget state -- )

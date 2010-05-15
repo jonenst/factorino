@@ -5,15 +5,23 @@ factorino.maps.general factorino.maps.sparse factorino.types
 factorino.driving.utils models
 io kernel locals factorino.maps.display ui
 math math.functions math.vectors path-finding prettyprint
-sequences sets threads math.ranges arrays sequences.product ;
+sequences sets threads math.ranges arrays sequences.product combinators ;
 FROM: factorino.maps.general => neighbours ;
 IN: factorino.driving
 
 <PRIVATE
+
+: obstacle-weight ( state -- weight ) ;
+: weight ( state -- weight )
+    {
+        { [ dup UNEXPLORED = ] [ drop 1 ] }
+        { [ dup FREE = ] [ drop 5 ] }
+        { [ dup (is-obstacle?) ] [ obstacle-weight ] }
+    } cond ;
 ! TODO: subclass astar to use optimizing compiler
 : <my-astar> ( map -- astar ) 
     [ neighbours ] 
-    [ state UNEXPLORED = 1 10 ? nip ] bi-curry
+    [ nip state weight ] bi-curry
     [ v- [ abs ] [ + ] map-reduce ]
     <astar> ;
 : >real-path ( cell-path -- real-path ) [ {i,j}>{x,y} ] map ;

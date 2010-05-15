@@ -2,7 +2,7 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: factorino.maps.general sequences arrays kernel accessors 
 locals math combinators.short-circuit factorino.maps.utils math.vectors
-fry factorino.maps.display.common ;
+fry factorino.maps.display.common math.order ;
 IN: factorino.maps.table
 
 TUPLE: table-map table size index-offset ;
@@ -49,11 +49,11 @@ M: table-map init
 M:: table-map neighbours ( {i,j} the-map -- neighbours )
     {i,j} the-map to-table :> ( {i',j'} the-table )
     {i',j'} the-map table-map-neighbours 
-    [ the-table Mi,j { [ FREE = ] [ UNEXPLORED = ] [ UNREACHABLE = ] } 1|| ] filter
+    [ the-table Mi,j { [ FREE = ] [ UNEXPLORED = ] [ UNREACHABLE = ] [ OBSTACLE MAX-OBSTACLE between? ] } 1|| ] filter
     the-map size>> [ table>real ] curry map ;
 M: table-map set-state to-table set-Mi,j ;
 M: table-map state to-table Mi,j ;
-M: table-map all-obstacles [ table>> [ OBSTACLE = ] mfilter-index ] keep size>> [ table>real ] curry map ;
+M: table-map all-obstacles [ table>> [ (is-obstacle?) ] mfilter-index ] keep size>> [ table>real ] curry map ;
 M: table-map map-size size>> ;
 M: table-map random-unexplored [ table>> UNEXPLORED swap mindex ] keep size>> table>real ;
 M:: table-map draw-map ( gadget the-map -- )
