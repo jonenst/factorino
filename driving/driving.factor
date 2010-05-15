@@ -2,7 +2,7 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors factorino.asserv factorino.basics
 factorino.maps.general factorino.maps.sparse factorino.types
-factorino.driving.utils
+factorino.driving.utils models
 io kernel locals factorino.maps.display ui
 math math.functions math.vectors path-finding prettyprint
 sequences sets threads math.ranges arrays sequences.product ;
@@ -58,6 +58,8 @@ IN: factorino.driving
 PRIVATE>
 ! FUCK
 ! C'est quoi ce mot ?!?!? @FUUUU
+: update-current-path ( path robotino -- )
+    current-path>> set-model ;
 :: (go-to) ( robotino position the-map -- arrived? )
     robotino odometry-xy position
     [ {x,y}>{i,j} ] bi@
@@ -65,7 +67,7 @@ PRIVATE>
     the-map <my-astar>
     find-path :> cell-path
     yield
-    the-map cell-path update-current-path
+    cell-path robotino update-current-path
     cell-path [
         cell-path empty? [ t ] [
         cell-path unclip [ FREE ] dip the-map set-state

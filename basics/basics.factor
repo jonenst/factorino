@@ -197,7 +197,8 @@ CONSTANT: MOVING-THRESHOLD 1
     [ com-set-address* ]
     [ com-connect* ] 
     [ ] tri
-     { } clone { 0 0 } <robotino-image> <model> >>camera-image
+    { } clone { 0 0 } <robotino-image> <model> >>camera-image
+    { } \ robotino-path-model new-model >>current-path
     ;
 : <robotino> ( address -- robotino ) 
     \ robotino new-robotino ;

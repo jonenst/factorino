@@ -6,7 +6,7 @@ IN: factorino.types
 
 TUPLE: robotino com-id omnidrive-id bumper-id sensors-id odometry-id camera-id 
 current-direction initial-angle should-be-moving? should-be-moving-alarm
-current-position position-refresh-alarm
+current-position position-refresh-alarm current-path
 camera-image camera-alarm observers
 { imu-angle initial: 0.0 } { prev-imu-angle initial: { } } imu-thread { refresh-imu? initial: t }
 filtered-phi { imu-offset initial: 0.0 } { raw-imu initial: 0.0 }
@@ -14,6 +14,7 @@ calibration-table
 measured-speed measure-speed-alarm { measure-speed? initial: t }
 ;
 TUPLE: robotino-position-model < model ;
+TUPLE: robotino-path-model < model ;
 : throw-when-false ( return-code -- ) FALSE = [ "False return code from openrobotino1 lib" throw ] when ;
 
 TUPLE: position {x,y} phi ;

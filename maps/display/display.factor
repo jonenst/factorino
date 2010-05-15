@@ -51,10 +51,14 @@ PRIVATE>
 : display ( map -- map-gadget ) <map-gadget> [ [ "Map" open-window ] curry with-ui ] keep yield dup apply-full-screen-offset ;
 M: map-gadget set-state [ map>> set-state ] [ relayout-1 ] bi ;
 M: map-gadget model-changed 
-    over { 
-    { [ robotino-position-model? ] [ swap value>> {x,y}>> {x,y}>{i,j} update-robotino-position ] }
+    { 
+    { [ over robotino-position-model? ] [ swap value>> {x,y}>> {x,y}>{i,j} update-robotino-position ] }
+    { [ over robotino-path-model? ] [ swap value>> update-current-path ] }
+    [ 2drop ] 
    !  { [ map-model? ] [ 2drop ] } 
     } cond ;
 
 : register-robotino ( robotino map-gadget -- )
-    swap current-position>> add-connection ;
+    swap
+    [ current-position>> ] [ current-path>> ] 2bi
+    [ add-connection ] 2bi@ ;
