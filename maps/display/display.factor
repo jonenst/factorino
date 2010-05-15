@@ -31,9 +31,9 @@ M: map-gadget pref-dim* drop { 400 400 } ;
 M: map-gadget draw-gadget* 
     [ dup map>> draw-map ] [ draw-current-path ] [ draw-robotino ] tri ;
 : zoom-multiplier ( dir -- multiplier )
-{ { -1 [ 1.1 ] }
-  { 1  [ 1.1 recip ] }
-} case ;
+    {  { -1 [ 1.1 ] }
+       { 1  [ 1.1 recip ] }
+    } case ;
 map-gadget H{
     { T{ button-down f f 1 } [ [ mouse-pos ] [ toggle-obstacle ] bi ] } 
     { T{ button-up f f 3 } [ dup origin-offset>> >>in-drag-origin-offset relayout-1 ] } 
