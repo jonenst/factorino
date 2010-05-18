@@ -27,9 +27,10 @@ M: sparse-map init
 M: sparse-map set-state 
 rot
 { 
-    { OBSTACLE [ [ map>> adjoin ] [ explored>> adjoin ] 2bi ] }
     { FREE [ [ map>> delete ] [ explored>> adjoin ] 2bi ] }
     { UNEXPLORED [ [ explored>> delete ] [ map>> delete ] 2bi ] }
+    ! obstacle
+    [ drop [ map>> adjoin ] [ explored>> adjoin ] 2bi ]
 } case ;
 M: sparse-map neighbours 
     map>> [ side-neighbours ] dip [ in? not ] curry filter ;
