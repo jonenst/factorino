@@ -16,4 +16,4 @@ IN: factorino.asserv.tests
 [ f ] [ 10 { 20 50 } in-range ] unit-test
 [ f ] [ -50 { 10 30 } in-range ] unit-test
 
-[ { 3.0 6.0 } ] [ { 0 0 } { 10 20 } (merge-vectors) ] unit-test
+[ { 8.0 16.0 } ] [ { 0 0 } { 10 20 } (merge-vectors) ] unit-test

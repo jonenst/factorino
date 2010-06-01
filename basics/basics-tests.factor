@@ -9,9 +9,9 @@ IN: factorino.basics.tests
 [ 30.0 ] [ 0 20 1.5 barycentre >float ] unit-test
 [ 0.0 ] [ 10 20 -1 barycentre >float ] unit-test
 
-[ 5.0 ] [ { { 0 1 } { 2 3 } { 4 5 } { 6 10 } } 7.5 value>distance >float ] unit-test
-[ 6.0 ] [ { { 0 0 } { 2 4 } } 12 value>distance >float ] unit-test
-[ -6.0 ] [ { { 0 0 } { 2 4 } } -12 value>distance >float ] unit-test
+[ 4.0 ] [ { { 0 1 } { 2 3 } { 4 5 } { 6 10 } } 3 voltage>distance >float ] unit-test
+[ 24.0 ] [ { { 0 0 } { 2 4 } } 12 voltage>distance >float ] unit-test
+[ -24.0 ] [ { { 0 0 } { 2 4 } } -12 voltage>distance >float ] unit-test
 
 [ t ] [ { 1 0 } pi 2 / rotate { 0 1 } 0.0001 v~ ] unit-test
 

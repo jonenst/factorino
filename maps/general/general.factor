@@ -1,6 +1,6 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: kernel math sequences math.order ;
+USING: kernel math sequences math.order math.vectors ;
 IN: factorino.maps.general
 
 CONSTANT: UNEXPLORED   0
@@ -23,14 +23,18 @@ GENERIC: random-unexplored ( map -- pos )
 : is-obstacle? ( {i,j} map -- ? ) state (is-obstacle?) ;
 : <map> ( size class -- map ) new init ;
 
+: in-map? ( {i,j} map -- ? )
+    [ vabs ] [ map-size dup 2 v/n v- ] bi* v- [ 0 < ] all? ;
 CONSTANT: OBSTACLE-INCREMENT-FACTOR 2
 CONSTANT: OBSTACLE-INCREMENT-OFFSET 20
+<PRIVATE
 : change-state ( {i,j} map quot: ( state -- new-state ) -- )
     [ state ] prepose 2keep set-state ; inline
 : (increment-obstacle) ( obstacle -- new-obstacle )
     OBSTACLE - OBSTACLE-INCREMENT-FACTOR * OBSTACLE-INCREMENT-OFFSET + OBSTACLE + ;
 : increment-obstacle ( obstacle -- new-obstacle )
     (increment-obstacle) OBSTACLE MAX-OBSTACLE clamp ;
+PRIVATE>
 : decay-ij ( {i,j} map -- )
     [ dup MAX-OBSTACLE < [ 1 - dup OBSTACLE < [ drop FREE ] when ] when ] change-state ;
 : decay ( map -- )

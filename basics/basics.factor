@@ -9,15 +9,6 @@ io.encodings.ascii fry io.sockets continuations
 io.binary images tools.time io images.viewer ;
 IN: factorino.basics
 <PRIVATE
-: surrounding-values ( calibration-table value -- values )
-    {
-        { [ 2dup [ values first ] dip > ] [ drop values 2 head ] }
-        { [ 2dup [ values last ] dip < ] [ drop values 2 tail* ] }
-        [ [ values dup rest zip ] [ [ swap first2 between? ] curry ] bi* find nip ]
-    } cond ;
-: values>keys ( calibration-table values -- distances )
-    [ swap value-at ] with map ;
-PRIVATE>
 GENERIC: com-destroy* ( identifier -- )
 GENERIC: com-set-address* ( address identifier -- )
 GENERIC: com-address* ( identifier -- address/f )
@@ -25,8 +16,9 @@ GENERIC: com-set-image-server-port* ( port identifier -- )
 GENERIC: com-connect* ( identifier -- )
 GENERIC: com-disconnect* ( identifier -- )
 GENERIC: com-connected?* ( identifier -- )
+PRIVATE>
 GENERIC: com-wait-for-update* ( identifier -- )
-
+<PRIVATE
 PROTOCOL: com-protocol 
     com-destroy* com-set-address* com-address* com-set-image-server-port*
     com-connect* com-disconnect* com-connected?* com-wait-for-update* ;
@@ -37,9 +29,9 @@ ROBOTINO-WORD: omnidrive OmniDrive
 ROBOTINO-WORD: camera Camera
 ROBOTINO-WORD: sensors DistanceSensor
 M: array sensors-destroy* [ sensors-destroy* ] each ;
-
+PRIVATE>
 : num-distance-sensors ( -- n ) numDistanceSensors ; 
-
+<PRIVATE
 M: integer com-connect* Com_connect throw-when-false ; 
 M: integer com-disconnect* Com_disconnect throw-when-false ; 
 M: integer com-destroy* Com_destroy throw-when-false ;
@@ -62,7 +54,9 @@ M: integer com-set-address* swap Com_setAddress throw-when-false ;
 : 4curry ( a b c d quot -- quot ) 2curry 2curry ;
 
 ! TODO: check that we're moving in the right direction to catch partial blocks ? Does this happen ?
+PRIVATE>
 CONSTANT: MOVING-THRESHOLD 1
+<PRIVATE
 : ?set-later ( robotino -- )
     dup should-be-moving-alarm>> [
         drop
@@ -74,17 +68,22 @@ CONSTANT: MOVING-THRESHOLD 1
     [ f >>should-be-moving-alarm f >>should-be-moving? drop ] bi ;
 : set-should-be-moving ( robotino v -- )
     norm MOVING-THRESHOLD > [ ?set-later ] [ cancel-set ] if ;
+PRIVATE>
 :: omnidrive-set-velocity ( robotino v omega -- )
     robotino omnidrive-id>> v first2 omega
     [ OmniDrive_setVelocity ] 4curry 3 try-n-times throw-when-false 
     v omega <position> robotino (>>current-direction)
     robotino v set-should-be-moving ;
 
+<PRIVATE
 : bumper-construct ( robotino -- )
     Bumper_construct >>bumper-id
     [ bumper-id>> ] [ com-id>> ] bi
     Bumper_setComId throw-when-false ;
 : bumper-destroy ( robotino -- ) bumper-id>> Bumper_destroy throw-when-false ;
+PRIVATE>
+: bumper-value ( robotino -- ? ) bumper-id>> Bumper_value TRUE = t f ? ;
+<PRIVATE
 
 : sensor-id-at ( # robotino -- sensor-id ) sensors-id>> nth ;
 : distance-sensor-construct ( # robotino -- )
@@ -100,26 +99,67 @@ CONSTANT: MOVING-THRESHOLD 1
     sensor-id-at DistanceSensor_destroy throw-when-false ;
 :: distance-sensor-set-com-id ( # com-id robotino -- )
     # robotino sensor-id-at com-id DistanceSensor_setComId throw-when-false ;
+PRIVATE>
 : distance-sensor-voltage ( # robotino -- value ) sensor-id-at DistanceSensor_voltage ;
 : distance-sensor-heading ( # robotino -- value ) sensor-id-at DistanceSensor_heading ;
 
 : sensors-values ( robotino -- values ) sensors-id>> [ dup [ DistanceSensor_voltage ] when ] map ;
 : sensors-headings ( robotino -- values ) sensors-id>> [ dup [ DistanceSensor_heading ] when ] map ;
 
-:: value>distance ( calibration-table value -- distance )
-    calibration-table value surrounding-values :> surrounding-values
-    calibration-table surrounding-values values>keys :> surrounding-keys
-    surrounding-values first2 value calc-barycentre :> x
-    surrounding-keys first2 x barycentre ;
-: sensors-distances ( robotino -- distances )
-    [ calibration-table>> ] [ sensors-values ] bi
-    over [ [ value>distance ] with map ] [ 2drop f ] if ;
+<PRIVATE
+CONSTANT: default-calibration-table {
+    { 2.547509670257568 30.0 }
+    { 2.358251810073853 50.0 }
+    { 1.738183617591858 70.0 }
+    { 1.379589796066284 90.0 }
+    { 1.150488257408142 110.0 }
+    { 0.9936034679412842 130.0 }
+    { 0.861621081829071 150.0 }
+    { 0.759521484375 170.0 }
+    { 0.6773437261581421 190.0 }
+    { 0.62255859375 210.0 }
+    { 0.582714855670929 230.0 }
+    { 0.520458996295929 250.0 }
+    { 0.4781249761581421 270.0 }
+    { 0.4532226622104645 290.0 }
+    { 0.4183593690395355 310.0 }
+    { 0.3984375 330.0 }
+    { 0.3585937321186066 350.0 }
+    { 0.338671863079071 370.0 }
+    { 0.3187499940395355 390.0 }
+}
 
+: surrounding-keys ( calibration-table value -- values )
+    {
+        { [ 2dup [ keys first ] dip < ] [ drop keys 2 head ] }
+        { [ 2dup [ keys last ] dip > ] [ drop keys 2 tail* ] }
+        [ [ keys dup rest zip ] [ [ swap first2 swap between? ] curry ] bi* find nip ]
+    } cond ;
+: keys>values ( calibration-table values -- distances )
+    [ swap at ] with map ;
+PRIVATE>
+
+
+:: voltage>distance ( calibration-table voltage -- distance )
+    calibration-table voltage surrounding-keys :> surrounding-keys
+    calibration-table surrounding-keys keys>values :> surrounding-values
+    surrounding-keys first2 voltage calc-barycentre :> x
+    surrounding-values first2 x barycentre ;
+<PRIVATE
+: get-calibration-table ( robotino -- calibration-table )
+    calibration-table>> [ default-calibration-table ] unless* ;
+PRIVATE>
+: sensors-distances ( robotino -- distances )
+    [ get-calibration-table ] [ sensors-values ] bi
+    over [ [ voltage>distance ] with map ] [ 2drop f ] if ;
+
+<PRIVATE
 : odometry-construct ( robotino -- ) 
     Odometry_construct >>odometry-id 
     [ odometry-id>> ] [ com-id>> ] bi 
     Odometry_setComId throw-when-false ;
 : odometry-destroy ( robotino -- ) odometry-id>> Odometry_destroy throw-when-false ;
+PRIVATE>
 : odometry-x ( robotino -- x ) odometry-id>> Odometry_x ;
 : odometry-y ( robotino -- y ) odometry-id>> Odometry_y ;
 : odometry-xy ( robotino -- {x,y} ) [ odometry-x ] [ odometry-y ] bi 2array ;
@@ -128,11 +168,13 @@ CONSTANT: MOVING-THRESHOLD 1
 : filtered-phi ( robotino -- phi ) odometry-phi ;
 : filtered-xy ( robotino -- phi ) odometry-xy ;
 : filtered-position ( robotino -- phi ) [ filtered-xy ] [ filtered-phi ] bi <position> ;
+<PRIVATE
 : (odometry-set) ( robotino x y phi -- ) [ odometry-id>> ] 3dip Odometry_set throw-when-false ;
+PRIVATE>
 : odometry-set ( robotino position -- ) [ {x,y}>> first2 ] [ phi>> ] bi (odometry-set) ;
 : odometry-set-phi ( robotino phi -- ) [ dup odometry-xy first2 ] dip (odometry-set) ;
 : odometry-reset ( robotino -- ) dup raw-imu>> >>imu-offset  { 0 0 } 0 <position> odometry-set ;
-
+<PRIVATE
 : camera-construct ( robotino -- )
     Camera_construct >>camera-id
     [ camera-id>> ] [ com-id>> ] bi Camera_setComId throw-when-false ;
@@ -185,6 +227,7 @@ CONSTANT: MOVING-THRESHOLD 1
     dup observers>> empty? [ camera-stop-refreshing ] [ camera-start-refreshing ] if ;
 : (set-camera-observer) ( observer robotino connection-quot observers-quot -- )
      '[ [ camera-image>> @ ] [  _ with change-observers camera-start/stop ] 2bi ] call ; inline 
+PRIVATE>
 : register-camera-observer ( observer robotino -- )
     [ [ add-connection ] [ set-image ] 2bi drop ] [ swap suffix ] (set-camera-observer) ;
 : unregister-camera-observer ( observer robotino -- )
@@ -212,6 +255,7 @@ CONSTANT: MOVING-THRESHOLD 1
     [ (>>position-refresh-alarm) ] tri ;
 
 CONSTANT: imu-port 54321
+<PRIVATE
 : (merge-imu) ( imu-angle robotino -- )
     [ odometry-phi 0.99 barycentre ] 
     [ ! swap odometry-set-phi
@@ -219,8 +263,10 @@ CONSTANT: imu-port 54321
     ] bi ;
 : merge-imu ( imu-angle robotino -- )
     dup current-direction>> {x,y}>> norm 0 1 v~ [ (merge-imu) ] [ 2drop ] if ;
+PRIVATE>
 : update-phi-with-imu ( robotino -- )
     dup imu-angle>> odometry-set-phi ;
+<PRIVATE
 CONSTANT: IMU-FIFO-LENGTH 30
 : store-imu ( robotino -- )
     [ imu-angle>> ] keep [ dup length IMU-FIFO-LENGTH > [ rest ] when swap suffix ] with change-prev-imu-angle drop ;
@@ -239,12 +285,14 @@ CONSTANT: IMU-FIFO-LENGTH 30
     ] ; inline
 : refresh-quotation ( remote encoding robotino -- quot )
     [ [ (refresh-quotation) call ] [ [ 3drop ] dip "imu failed for some reason" debug drop drop ] recover ] 3curry ; inline
+PRIVATE>
 : init-imu-refresh ( robotino -- )
     [ com-address* imu-port <inet> ascii ]
     [ refresh-quotation ]
     [  [ "imu-thread" spawn ] dip (>>imu-thread) ] tri ;
 : stop-imu-refresh ( robotino -- )
     f >>refresh-imu? drop ;
+<PRIVATE
 : calc-speed ( robotino -- speed )
     [ 
         [ filtered-xy 
@@ -256,6 +304,7 @@ CONSTANT: IMU-FIFO-LENGTH 30
 : refresh-speed-loop ( robotino -- )
     [ [ refresh-speed ] [ measure-speed?>> ] bi ] curry loop ;
 
+PRIVATE>
 : init-refresh-speed ( robotino -- )
     [ [ refresh-speed-loop ] curry "refreshing speed thread" spawn ] keep (>>measure-speed-alarm) ;
 : stop-refresh-speed ( robotino -- )
@@ -303,7 +352,7 @@ CONSTANT: IMU-FIFO-LENGTH 30
 : calc-angle ( previous-time -- angle current-time ) 
     nano-count [ - pi 2 * * 9 10 ^ / ] keep ;
 :: (drive) ( robotino vector previous-time -- )
-    previous-time calc-angle :> new-time :> angle
+    previous-time calc-angle :> ( angle new-time )
     vector angle rotate :> new-vector
     robotino new-vector 0 omnidrive-set-velocity
     50 milliseconds sleep 

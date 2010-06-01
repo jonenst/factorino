@@ -1,15 +1,15 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors assocs calendar combinators factorino.asserv
+USING: accessors arrays assocs calendar combinators factorino.asserv
 factorino.asserv.private factorino.basics factorino.types
-factorino.utils factorino.wall-follower fry io kernel math
+factorino.utils factorino.wall-follower fry grouping io kernel math
 math.constants math.functions math.ranges math.vectors
 prettyprint random sequences threads ;
 IN: factorino.sensor-calibration
 
 CONSTANT: WALL-FOUND 0.5
 CONSTANT: SPEED 200
-CONSTANT: APPROACH-SPEED 30
+CONSTANT: APPROACH-SPEED 60
 CONSTANT: MEASURE-SPEED 100
 CONSTANT: FACE-THRESHOLD 3 
 : my~ ( a b -- equal? )
@@ -20,8 +20,8 @@ CONSTANT: FACE-THRESHOLD 3
     biggest-sensor-value dup "biggest sensor value : " write . WALL-FOUND > ;
 : go-towards-wall ( robotino speed -- )
     over wall-direction n*v 0 omnidrive-set-velocity ;
-: line ( direction length step -- positions )
-    [ 0 ] 2dip <range> [ v*n ] with map rest ;
+: line ( direction offset length step -- positions )
+     <range> [ v*n ] with map ;
 : neighbour-sensors ( i -- i1 i2 )
     1 [ + ] [ - ] 2bi [ num-distance-sensors rem ] bi@ ; 
 : wall-neighbours-sensors ( robotino -- i1 i2 )
@@ -44,11 +44,11 @@ CONSTANT: FACE-THRESHOLD 3
 : do-measures-at ( robotino positions measure-quot: ( robotino position -- key value ) -- table )
     '[
         2dup drive-to [ throw ] when
-        [ @ ] call( x y -- key value )
+        _ call( x y -- key value )
     ] with { } map>assoc ; inline
 : with-wall-facing ( robotino quot -- quot' )
     swap [ face-flat-wall ] curry prepose ; inline
-: one-sensor-measure ( wall-sensor -- quot: ( robotino positions wall-sensor -- ) )
+: one-sensor-measure ( wall-sensor -- quot: ( robotino position -- key value ) )
     '[ 
         [ [ _ ] dip
           [ wait-few-updates ]
@@ -80,7 +80,7 @@ CONSTANT: FACE-THRESHOLD 3
     { [ face-nonflat-wall ]
     [ biggest-sensor ]
     [ ]
-    [ [ biggest-sensor ] keep sensor-direction pi 2 / rotate 200 20 line ] } cleave
+    [ [ biggest-sensor ] keep sensor-direction pi 2 / rotate 0 200 20 line ] } cleave
     from-robotino-base
     [ measure-distances-noface values dup . dup first [ my~ ] curry all? ]
     [ midpoint drive-to drop ] 2bi ;
@@ -90,6 +90,13 @@ CONSTANT: FACE-THRESHOLD 3
     [ dup wall-direction vneg 500 v*n drive-from-here
     [ "error going back" throw ] when ] [
     random-orientation drive-from-here drop ] bi ;
+: find-wall ( robotino -- )
+    [ SPEED go-towards-wall ]
+    [ dup found-wall? [ 
+        stop-robotino
+    ] [
+        [ wait-few-updates ] [ find-wall ] bi
+    ] if ] bi ;
 : find-flat-wall ( robotino -- )
     [ SPEED go-towards-wall ]
     [ dup found-wall? [ 
@@ -102,20 +109,23 @@ CONSTANT: FACE-THRESHOLD 3
     [ APPROACH-SPEED go-towards-wall ]
     [ [ dup moving? ] loop stop-robotino ] bi ;
 
+: replace-with-norm ( calibration-table initial-positions -- calibration-table )
+   [ [ second ] [ norm ] bi* swap 2array ] 2map ; 
+    
 : measure-distances ( wall-sensor robotino -- calibration-table )
-    2dup sensor-direction vneg 400 20 line
-    measure-distances-at* ;
+    2dup sensor-direction vneg 30 400 20 line
+    [ measure-distances-at* ] keep replace-with-norm ;
 
 : reasonnable-table? ( table -- ? )
-    drop t ;
+    keys [ >= ] monotonic? ;
 : ?assign-table ( table robotino -- ? )
     over reasonnable-table? [ (>>calibration-table) t ] [ 2drop f ] if ;
 : calibrate-sensors ( robotino -- calibrated? )
     { 
-        [ find-flat-wall ]
-        [ face-flat-wall ]
+        [ find-wall "wall-found" print yield ]
+ !       [ face-flat-wall ]
         [ biggest-sensor ]
-        [ touch-wall ] 
-        [ measure-distances ]
+        [ touch-wall "wall-touched" print yield ] 
+        [ measure-distances "distance measured" print yield ]
         [ ?assign-table ]
     } cleave ;

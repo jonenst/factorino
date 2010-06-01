@@ -147,7 +147,7 @@ DEFER: drive-position
         drive-position
     ] if ;
 : moving? ( robotino -- ? )
-    measured-speed>> MOVING-THRESHOLD > ;
+    measured-speed>> "moving at " print dup . yield MOVING-THRESHOLD > ;
 SINGLETON: +obstacle-seen+
 SINGLETON: +hard-block+
 : block-condition ( robotino current-dir -- block-info/f )
@@ -230,7 +230,7 @@ M: array drive-from-here*
     [ drop f ]
     [ unclip pick swap drive-from-here* [ 2nip ] [ drive-from-here ] if* ] if-empty ;
 
-: drive-execute-path ( quot: ( -- ) robotino path -- blocking-pos/f ) [ f ] 2dip drive-path* ;
+: drive-execute-path ( quot: ( -- ) robotino path -- blocking-pos/f ) [ f ] 2dip [ drive-path* ] 2keep drop stop-robotino ;
 
 
 : seen-obstacles ( robotino -- angles ) 
