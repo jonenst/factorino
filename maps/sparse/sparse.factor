@@ -15,7 +15,7 @@ M: sparse-map set-state
     2dup in-map? [ map>> set-at ] 
     [ 3drop ] if ;
 M: sparse-map neighbours 
-    map>> [ side-neighbours ] dip [ in? not ] curry filter ;
+    map>> [ side-neighbours ] dip [ at* [ (is-obstacle?) ] [ drop t ] if ] curry filter length ;
 M: sparse-map state 
     2dup in-map? [
         map>> at* [ drop UNEXPLORED ] unless

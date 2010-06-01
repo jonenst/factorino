@@ -17,6 +17,8 @@ MEMO: test-map ( -- map )
  
 [ ${ OBSTACLE FREE UNEXPLORED OBSTACLE } ] 
     [ { { 0 0 } { 0 1 } { 0 2 } { 0 3 } } [ test-map state ] map ] unit-test
+[ 2 ] [ test-map all-obstacles length ] unit-test
+[ 3 ] [ { 0 1 } test-map neighbours ] unit-test
 
 [ ] [ { 0 3 } test-map t set-obstacle ] unit-test
 [ ] [ 10 [ test-map decay ] times ] unit-test
