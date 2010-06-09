@@ -14,6 +14,7 @@ CONSTANT: factorino-slides {
     { $slide "Plan"
         "Présentation de la plateforme"
         "Présentation du projet"
+        "Factor"
         "Présentation des différentes couches"
         "Conclusion"
     }
@@ -32,6 +33,17 @@ CONSTANT: factorino-slides {
         "Objectif: Cartographie et déplacements autour d'obstacles"
         "Plus généralement, des fonctions de controle de haut-niveau en Factor"
     }
+    { $slide "Factor"
+        { "Langage à pile" { $code "1 2 +" } }
+        "Langage concatenatif; code \"pipeline\""
+        "dynamique, objet, fortement typé"
+        "bibliothèque très complète"
+    }
+    { $slide "Factor sur le robotino"
+        "architecture x86."
+        "linux"
+        "256mo de mémoire, swap.."
+    }
     { $slide "L'implémentation"
         "Une série de couches (vocabulaires)"
         { "Qu'on peut découvrir avec la documentation de Factor : " { $link "factorino" } }
@@ -47,6 +59,9 @@ CONSTANT: factorino-slides {
        }
        { "Obtenir les valeurs des sharps :" { $code "dup sensors-values ." } }
        { "Et l'odometrie, la camera, la vitesse instantanée . . ."  }
+    }
+    { $slide "Factorino.controller"
+        { $code "USE: factorino.controller controller" }
     }
     { $slide "Factorino.asserv"
        { "Documentation : " { $link "factorino.asserv" } } 

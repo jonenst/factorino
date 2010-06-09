@@ -88,4 +88,4 @@ PRIVATE>
         ] [ t ] if ] if
     ] [ f ] if ;
 : go-to ( robotino position -- arrived? )
-   { 10000 10000 } cell-size v/n \ sparse-map <map> display (go-to)  ;
+   { 2000 2000 } cell-size v/n \ sparse-map <map> display [ nip register-robotino ] [ (go-to) ] 3bi ;
