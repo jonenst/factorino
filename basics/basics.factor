@@ -341,7 +341,7 @@ PRIVATE>
         [ odometry-reset ]
         [ init-position-refresh ]
         [ init-refresh-speed ]
-        [ init-imu-refresh ] 
+   !     [ init-imu-refresh ] 
         [ ] 
     }
     cleave ;
