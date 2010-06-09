@@ -40,6 +40,3 @@ TUPLE: map-gadget < gadget map zoom origin-offset in-drag-origin-offset current-
 : draw-state ( pos map-gadget state -- )
     [ [ swap map>screen ] keep screen-cell-size ]
     [ set-state-color ] bi* gl-fill-rect ;
-
-: draw-obstacle ( obstacle map-gadget -- ) 
-        OBSTACLE draw-state ;

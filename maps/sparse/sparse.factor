@@ -15,15 +15,15 @@ M: sparse-map set-state
     2dup in-map? [ map>> set-at ] 
     [ 3drop ] if ;
 M: sparse-map neighbours 
-    map>> [ side-neighbours ] dip [ at* [ (is-obstacle?) ] [ drop t ] if ] curry filter length ;
+    map>> [ side-neighbours ] dip [ at* [ (is-obstacle?) ] [ drop t ] if ] curry filter ;
 M: sparse-map state 
     2dup in-map? [
         map>> at* [ drop UNEXPLORED ] unless
     ] [
         2drop MAX-OBSTACLE
     ] if ;
-M: sparse-map all-obstacles map>> [ nip (is-obstacle?) ] assoc-filter keys ;
+M: sparse-map all-obstacles map>> [ nip (is-obstacle?) ] assoc-filter ;
 M: sparse-map map-size size>> ;
 M: sparse-map draw-map 
-    all-obstacles swap [ draw-obstacle ] curry each ;
+    map>> swap [ swap draw-state ] curry assoc-each ;
 
