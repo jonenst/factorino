@@ -59,6 +59,7 @@ CONSTANT: factorino-slides {
        }
        { "Obtenir les valeurs des sharps :" { $code "dup sensors-values ." } }
        { "Et l'odometrie, la camera, la vitesse instantanée . . ."  }
+       { $code "kill-robotino" }
     }
     { $slide "Factorino.controller"
         { $code "USE: factorino.controller controller" }
