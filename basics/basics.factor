@@ -1,12 +1,12 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors alarms assocs arrays byte-arrays calendar combinators
+USING: accessors timers assocs arrays byte-arrays calendar combinators
 combinators.short-circuit delegate kernel locals math
 math.constants math.functions math.order math.vectors models
 namespaces prettyprint sequences system threads factorino.imu
 factorino.bindings factorino.functor factorino.types factorino.types.utils factorino.utils ui ui.gadgets.buttons strings 
 io.encodings.ascii fry io.sockets continuations 
-io.binary images tools.time io images.viewer ;
+io.binary images tools.time io images.viewer timers ;
 IN: factorino.basics
 <PRIVATE
 GENERIC: com-destroy* ( identifier -- )
@@ -61,10 +61,10 @@ CONSTANT: MOVING-THRESHOLD 1
     dup should-be-moving-alarm>> [
         drop
     ] [
-        [ [ t >>should-be-moving? ] curry 500 milliseconds later ] keep (>>should-be-moving-alarm)
+        [ [ t >>should-be-moving? ] curry 500 milliseconds later ] keep should-be-moving-alarm<<
     ] if ;
 : cancel-set ( robotino -- )
-    [ should-be-moving-alarm>> [ cancel-alarm ] when* ]
+    [ should-be-moving-alarm>> [ stop-timer ] when* ]
     [ f >>should-be-moving-alarm f >>should-be-moving? drop ] bi ;
 : set-should-be-moving ( robotino v -- )
     norm MOVING-THRESHOLD > [ ?set-later ] [ cancel-set ] if ;
@@ -72,7 +72,7 @@ PRIVATE>
 :: omnidrive-set-velocity ( robotino v omega -- )
     robotino omnidrive-id>> v first2 omega
     [ OmniDrive_setVelocity ] 4curry 3 try-n-times throw-when-false 
-    v omega <position> robotino (>>current-direction)
+    v omega <position> robotino current-direction<<
     robotino v set-should-be-moving ;
 
 <PRIVATE
@@ -219,10 +219,10 @@ PRIVATE>
     dup camera-grab? [ (update-image) ] [ drop ] if ;
 : camera-start-refreshing ( robotino -- )
     [ t camera-set-streaming ]
-    [ [ [ update-image ] curry 1 15 / seconds every ] keep (>>camera-alarm) ] bi ;
+    [ [ [ update-image ] curry 1 15 / seconds every ] keep camera-alarm<< ] bi ;
 : camera-stop-refreshing ( gadget -- )
     [ [ f camera-set-streaming ] curry [ drop ] recover ]
-    [ camera-alarm>> [ cancel-alarm ] when* ] bi ;
+    [ camera-alarm>> [ stop-timer ] when* ] bi ;
 : camera-start/stop ( robotino -- )
     dup observers>> empty? [ camera-stop-refreshing ] [ camera-start-refreshing ] if ;
 : (set-camera-observer) ( observer robotino connection-quot observers-quot -- )
@@ -246,20 +246,20 @@ PRIVATE>
 : <robotino> ( address -- robotino ) 
     \ robotino new-robotino ;
 : stop-position-refresh ( robotino -- )
-    position-refresh-alarm>> [ cancel-alarm ] when* ;
+    position-refresh-alarm>> [ stop-timer ] when* ;
 : refresh-position ( robotino -- )
     [ odometry-position ] [ current-position>> ] bi set-model ;
 : init-position-refresh ( robotino -- )
     [ dup odometry-position \ robotino-position-model new-model >>current-position drop ]
     [ [ refresh-position ] curry 200 milliseconds every ]
-    [ (>>position-refresh-alarm) ] tri ;
+    [ position-refresh-alarm<< ] tri ;
 
 CONSTANT: imu-port 54321
 <PRIVATE
 : (merge-imu) ( imu-angle robotino -- )
     [ odometry-phi 0.99 barycentre ] 
     [ ! swap odometry-set-phi
-      (>>filtered-phi) 
+      filtered-phi<< 
     ] bi ;
 : merge-imu ( imu-angle robotino -- )
     dup current-direction>> {x,y}>> norm 0 1 v~ [ (merge-imu) ] [ 2drop ] if ;
@@ -272,8 +272,8 @@ CONSTANT: IMU-FIFO-LENGTH 30
     [ imu-angle>> ] keep [ dup length IMU-FIFO-LENGTH > [ rest ] when swap suffix ] with change-prev-imu-angle drop ;
 : refresh-imu ( imu-angle robotino -- )
     over [ 
-        { [ nip store-imu ] [ [ imu-offset>> - ] keep (>>imu-angle) ] [ (merge-imu) ]
-        [ (>>raw-imu) ] } 2cleave 
+        { [ nip store-imu ] [ [ imu-offset>> - ] keep imu-angle<< ] [ (merge-imu) ]
+        [ raw-imu<< ] } 2cleave 
     ] [
         2drop
     ] if ;
@@ -289,7 +289,7 @@ PRIVATE>
 : init-imu-refresh ( robotino -- )
     [ com-address* imu-port <inet> ascii ]
     [ refresh-quotation ]
-    [  [ "imu-thread" spawn ] dip (>>imu-thread) ] tri ;
+    [  [ "imu-thread" spawn ] dip imu-thread<< ] tri ;
 : stop-imu-refresh ( robotino -- )
     f >>refresh-imu? drop ;
 <PRIVATE
@@ -300,13 +300,13 @@ PRIVATE>
         [ filtered-xy ] bi 
     ] benchmark 9 10^ /
     [ v- norm ] dip / ;
-: refresh-speed ( robotino -- ) [ calc-speed ] [ (>>measured-speed) ] bi ;
+: refresh-speed ( robotino -- ) [ calc-speed ] [ measured-speed<< ] bi ;
 : refresh-speed-loop ( robotino -- )
     [ [ refresh-speed ] [ measure-speed?>> ] bi ] curry loop ;
 
 PRIVATE>
 : init-refresh-speed ( robotino -- )
-    [ [ refresh-speed-loop ] curry "refreshing speed thread" spawn ] keep (>>measure-speed-alarm) ;
+    [ [ refresh-speed-loop ] curry "refreshing speed thread" spawn ] keep measure-speed-alarm<< ;
 : stop-refresh-speed ( robotino -- )
    f >>measure-speed? drop ; 
 

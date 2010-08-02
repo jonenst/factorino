@@ -1,10 +1,10 @@
-USING: alien.c-types alien.libraries alien.syntax ;
+USING: alien.c-types alien.libraries alien.syntax alien ;
 IN: factorino.bindings
 
 <<
 "rec_robotino_com_c" 
 "librec_robotino_com_c.so"
-"cdecl" add-library
+cdecl add-library
 >>
 
 LIBRARY: rec_robotino_com_c

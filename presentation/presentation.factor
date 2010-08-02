@@ -1,8 +1,8 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: slides help.markup 
-sequences kernel parser memoize 
-namespaces factorino.bindings factorino.basics factorino.asserv factorino.driving factorino.explore factorino.maps factorino.sensor-calibration ;
+sequences kernel parser memoize factorino.bindings
+namespaces factorino.basics factorino.asserv factorino.driving factorino.explore factorino.maps factorino.sensor-calibration factorino factorino.controller ;
 IN: factorino.presentation
 
 
@@ -100,9 +100,6 @@ CONSTANT: factorino-slides {
         { $vocab-link "factorino.sensor-calibration" }
         }
 }
-
-
- 
 
 : factorino-presentation ( -- ) "Jon Harper" presenter-name [ factorino-slides slides-window ] with-variable ;
 

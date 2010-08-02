@@ -4,7 +4,7 @@ USING: accessors arrays assocs colors.constants factorino.types kernel
 math math.constants math.functions math.vectors opengl
 sequences ui.gadgets ui.render
 factorino.basics factorino.utils factorino.sensor-disp 
-calendar alarms fonts ui.text ;
+calendar timers fonts ui.text ;
 IN: factorino.sensor-disp
 CONSTANT: points-number 20
 CONSTANT: DETECTION-THRESHOLD 0.5
@@ -14,10 +14,10 @@ TUPLE: sensor-gadget < gadget robotino refresh-alarm ;
 : start-refreshing ( sensor-gadget -- )
     dup refresh-alarm>> [ drop ] [
         [ [ relayout-1 ] curry 200 milliseconds every ] keep
-        (>>refresh-alarm)
+        refresh-alarm<<
     ] if ;
 : stop-refreshing ( sensor-gadget -- )
-    [ refresh-alarm>> [ cancel-alarm ] when* ] 
+    [ refresh-alarm>> [ stop-timer ] when* ] 
     [ f >>refresh-alarm drop ] bi ;
 : register-robotino ( gadget robotino -- )
     >>robotino drop ;

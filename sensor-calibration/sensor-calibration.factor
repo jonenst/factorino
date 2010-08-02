@@ -119,7 +119,7 @@ CONSTANT: FACE-THRESHOLD 3
 : reasonnable-table? ( table -- ? )
     keys [ >= ] monotonic? ;
 : ?assign-table ( table robotino -- ? )
-    over reasonnable-table? [ (>>calibration-table) t ] [ 2drop f ] if ;
+    over reasonnable-table? [ calibration-table<< t ] [ 2drop f ] if ;
 : calibrate-sensors ( robotino -- calibrated? )
     { 
         [ find-wall "wall-found" print yield ]

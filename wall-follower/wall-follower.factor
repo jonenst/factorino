@@ -1,7 +1,7 @@
 ! Copyright (C) 2010 Your name.
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors calendar combinators combinators.short-circuit
-factorino.basics factorino.types factorino.utils inverse io
+factorino.basics factorino.basics.private factorino.types factorino.utils inverse io
 kernel math math.constants math.vectors memoize prettyprint
 sequences threads ;
 IN: factorino.wall-follower
@@ -40,7 +40,7 @@ MEMO: escape-vectors  ( robotino -- vectors ) sensors-headings [ { 1 0 } swap to
     normalize 
     pi rotate ; 
 : calc-store-escape-vector ( robotino -- )
-    [ escape-vector ] keep (>>current-dir) ;
+    [ escape-vector ] keep current-dir<< ;
 
 : new-wall? ( robotino -- ? )
     { [ biggest-sensor-value NEW_WALL_FOUND_V > ]

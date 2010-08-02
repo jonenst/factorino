@@ -1,6 +1,6 @@
 ! Copyright (C) 2010 Jon Harper.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: accessors alarms arrays calendar colors combinators
+USING: accessors timers arrays calendar colors combinators
 delegate factorino.driving.utils factorino.maps.display.common
 factorino.maps.general factorino.types factorino.utils kernel
 math math.functions math.rectangles math.vectors models

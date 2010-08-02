@@ -2,7 +2,7 @@
 ! See http://factorcode.org/license.txt for BSD license.
 USING: accessors arrays colors
 kernel opengl sequences ui.render ui.gadgets grouping ui math calendar threads 
-alarms ui.gestures factorino.basics images images.viewer ui.gadgets.packs 
+timers ui.gestures factorino.basics images images.viewer ui.gadgets.packs 
 combinators.short-circuit factorino.utils io continuations literals images.loader ui.gadgets.books 
 namespaces models images.jpeg ;
 FROM: models => change-model ;
